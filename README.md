@@ -5,11 +5,7 @@
 [![License][license-shield]](LICENSE)
 
 [![hacs][hacsbadge]][hacs]
-![Project Maintenance][maintenance-shield]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
-
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
 
 _Component to integrate with [integration_blueprint][integration_blueprint]._
 
@@ -60,7 +56,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 ***
 
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
-[buymecoffee]: https://www.buymeacoffee.com/tvtX
+[buymecoffee]: https://www.buymeacoffee.com/knudsvik
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
 [commits-shield]: https://img.shields.io/github/commit-activity/y/custom-components/blueprint.svg?style=for-the-badge
 [commits]: https://github.com/custom-components/integration_blueprint/commits/master
