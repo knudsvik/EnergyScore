@@ -1,0 +1,15 @@
+{
+  "domain": "powerscore",
+  "name": "PowerScore",
+  "integration_type": "entity",
+  "documentation": "https://github.com/knudsvik/powerscore",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/knudsvik/powerscore/issues",
+  "version": "0.0.1",
+  "dependencies": "energy",
+  "requirements": "numpy",
+  "config_flow": true,
+  "codeowners": [
+    "@knudsvik"
+  ]
+}
