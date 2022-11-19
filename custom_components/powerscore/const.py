@@ -15,6 +15,8 @@ PLATFORMS = [SENSOR]
 
 # Configuration and options
 CONF_ENABLED = "enabled"
+CONF_TEXT = "text"
+DEFAULT_TEXT = "No text!"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

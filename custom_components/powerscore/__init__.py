@@ -21,8 +21,6 @@ from .const import (
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-DOMAIN = "powerscore"
-
 
 async def async_setup(hass: HomeAssistant, config: Config):
     # def setup(hass, config):
