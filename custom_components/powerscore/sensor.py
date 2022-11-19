@@ -1,5 +1,5 @@
 """Sensor platform for integration_blueprint."""
-from homeassistant.components.sensor import SensorEntity
+'''from homeassistant.components.sensor import SensorEntity
 
 from .const import DEFAULT_NAME, DOMAIN, ICON, SENSOR
 from .entity import IntegrationBlueprintEntity
@@ -28,3 +28,4 @@ class IntegrationBlueprintSensor(IntegrationBlueprintEntity, SensorEntity):
     def icon(self):
         """Return the icon of the sensor."""
         return ICON
+'''

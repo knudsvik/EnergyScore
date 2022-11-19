@@ -1,33 +1,23 @@
-"""Constants for integration_blueprint."""
+"""Constants for PowerScore"""
 # Base component constants
-NAME = "Integration blueprint"
-DOMAIN = "integration_blueprint"
+NAME = "PowerScore"
+DOMAIN = "powerscore"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.0.1"
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
-ISSUE_URL = "https://github.com/custom-components/integration_blueprint/issues"
+ISSUE_URL = "https://github.com/knudsvik/powerscore/issues"
 
 # Icons
-ICON = "mdi:format-quote-close"
-
-# Device classes
-BINARY_SENSOR_DEVICE_CLASS = "connectivity"
+ICON = "mdi:speedometer"
 
 # Platforms
-BINARY_SENSOR = "binary_sensor"
 SENSOR = "sensor"
-SWITCH = "switch"
-PLATFORMS = [BINARY_SENSOR, SENSOR, SWITCH]
-
+PLATFORMS = [SENSOR]
 
 # Configuration and options
 CONF_ENABLED = "enabled"
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
 
 # Defaults
 DEFAULT_NAME = DOMAIN
-
 
 STARTUP_MESSAGE = f"""
 -------------------------------------------------------------------
