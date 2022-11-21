@@ -1,6 +1,6 @@
 """Sensor platform for integration_blueprint."""
-import numpy as np
 import logging
+import numpy as np
 from typing import Callable, Optional
 import voluptuous as vol
 
@@ -24,7 +24,7 @@ from .const import (
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {vol.Required(CONF_ENTITY_ID): cv.string, vol.Required(CONF_NAME): cv.string}
+    {vol.Required(CONF_NAME): cv.string, vol.Required(CONF_ENTITY_ID): cv.string}
 )
 
 """ async def async_setup_entry(hass, entry, async_add_devices):
@@ -40,7 +40,8 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensor platform"""
-    async_add_entities()
+    sensors = config[CONF_NAME]
+    async_add_entities(sensors, update_before_add=True)
 
 
 class PowerScore(SensorEntity):
@@ -77,6 +78,6 @@ class PowerScore(SensorEntity):
 
     async def async_update(self):
         try:
-            self._state = 42
+            self._state = np.random.random()
         except:
             _LOGGER.exception("Could not update the PowerScore")

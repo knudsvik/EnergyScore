@@ -10,4 +10,5 @@ logger:
 
 sensor:
   - platform: powerscore
+    name: Heater Power Score
     price_entity: sensor.sun
