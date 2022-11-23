@@ -1,20 +1,19 @@
 """Sensor platform for integration_blueprint."""
+from datetime import timedelta
+from typing import Callable
 import logging
 import numpy as np
-from typing import Callable, Optional
 import voluptuous as vol
 
 from homeassistant.components.sensor import SensorEntity, PLATFORM_SCHEMA
-from homeassistant.const import CONF_ENTITY_ID, CONF_NAME
+from homeassistant.const import CONF_NAME
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.typing import (
-    ConfigType,
-    DiscoveryInfoType,
-    HomeAssistantType,
-)
+from homeassistant.helpers.typing import ConfigType
 
 from .const import (
+    CONF_POWER_ENTITY,
+    CONF_PRICE_ENTITY,
     DEFAULT_NAME,
     DOMAIN,
     ICON,
@@ -23,58 +22,45 @@ from .const import (
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {vol.Required(CONF_NAME): cv.string, vol.Required(CONF_ENTITY_ID): cv.string}
-)
+# Time between updating data TODO: Set to be triggered by a new data point (every whole hour?)
+SCAN_INTERVAL = timedelta(minutes=1)
 
-""" async def async_setup_entry(hass, entry, async_add_devices):
-    "Setup sensor platform."
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_devices([PowerScore(coordinator, entry)]) """
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_POWER_ENTITY): cv.string,
+        vol.Required(CONF_PRICE_ENTITY): cv.string,
+    }
+)  # TODO: Add unique ID? Need to add as a sensor class property
 
 
 async def async_setup_platform(
-    hass: HomeAssistantType,
-    config: ConfigType,
-    async_add_entities: Callable,
-    discovery_info: Optional[DiscoveryInfoType] = None,
+    config: ConfigType, async_add_entities: Callable
 ) -> None:
     """Set up the sensor platform"""
-    sensors = config[CONF_NAME]
-    async_add_entities(sensors, update_before_add=True)
+    sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
+    async_add_entities(sensors)
 
 
 class PowerScore(SensorEntity):
     """PowerScore Sensor class."""
 
+    def __init__(self):
+        self._name = f"{DEFAULT_NAME}_{SENSOR}"  # TODO: Get name from yaml in here
+        self._state = None
+
     @property
     def name(self):
         """Return the name of the sensor."""
-        return f"{DEFAULT_NAME}_{SENSOR}"
+        return self._name
 
     @property
-    def native_value(self):
-        """Return the native value of the sensor."""
-        return self.coordinator.data.get("body")
+    def state(self):
+        return self._state
 
     # @property
-    # def state(self):
-    #    return np.random.random()
-
-    @property
-    def native_unit_of_measurement(self):
-        """Return the UoM of the sensor."""
-        return "%"
-
-    @property
-    def state_class(self):
-        """Return the state class of the sensor."""
-        return "measurement"
-
-    @property
-    def icon(self):
-        """Return the icon of the sensor."""
-        return ICON
+    # def device_state_attributes(self) -> Dict[str, Any]:
+    #    return self.attrs
 
     async def async_update(self):
         try:

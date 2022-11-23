@@ -14,9 +14,8 @@ SENSOR = "sensor"
 PLATFORMS = [SENSOR]
 
 # Configuration and options
-CONF_ENABLED = "enabled"
-CONF_TEXT = "text"
-DEFAULT_TEXT = "No text!"
+CONF_PRICE_ENTITY = "entity"
+CONF_POWER_ENTITY = "entity"
 
 # Defaults
 DEFAULT_NAME = DOMAIN
