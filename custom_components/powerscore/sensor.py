@@ -37,7 +37,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 async def async_setup_platform(
     config: ConfigType, async_add_entities: Callable
 ) -> None:
-    """Set up the sensor platform"""
+    """Set up the sensors from YAML config"""
     sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
     async_add_entities(sensors)
 
@@ -48,6 +48,8 @@ class PowerScore(SensorEntity):
     def __init__(self):
         self._name = f"{DEFAULT_NAME}_{SENSOR}"  # TODO: Get name from yaml in here
         self._state = None
+        self._power = CONF_POWER_ENTITY
+        self._price = CONF_PRICE_ENTITY
 
     @property
     def name(self):
