@@ -14,8 +14,8 @@ SENSOR = "sensor"
 PLATFORMS = [SENSOR]
 
 # Configuration and options
-CONF_PRICE_ENTITY = "entity"
-CONF_POWER_ENTITY = "entity"
+CONF_PRICE_ENTITY = "entity_id"
+CONF_POWER_ENTITY = "entity_id"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

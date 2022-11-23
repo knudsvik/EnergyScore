@@ -3,10 +3,12 @@ default_config:
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    custom_components.powerscore: debug
 
 # If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
-# debugpy:
+#debugpy:
+#  start: True
+#  wait: True
 
 sensor:
   - platform: powerscore

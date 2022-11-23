@@ -11,14 +11,7 @@ from homeassistant.const import CONF_NAME
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .const import (
-    CONF_POWER_ENTITY,
-    CONF_PRICE_ENTITY,
-    DEFAULT_NAME,
-    DOMAIN,
-    ICON,
-    SENSOR,
-)
+from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -28,10 +21,10 @@ SCAN_INTERVAL = timedelta(minutes=1)
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_POWER_ENTITY): cv.string,
-        vol.Required(CONF_PRICE_ENTITY): cv.string,
+        vol.Required(CONF_POWER_ENTITY): cv.entity_id,
+        vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
     }
-)  # TODO: Add unique ID? Need to add as a sensor class property
+)
 
 
 async def async_setup_platform(
@@ -46,7 +39,7 @@ class PowerScore(SensorEntity):
     """PowerScore Sensor class."""
 
     def __init__(self):
-        self._name = f"{DEFAULT_NAME}_{SENSOR}"  # TODO: Get name from yaml in here
+        self._name = CONF_NAME
         self._state = None
         self._power = CONF_POWER_ENTITY
         self._price = CONF_PRICE_ENTITY
@@ -65,6 +58,7 @@ class PowerScore(SensorEntity):
     #    return self.attrs
 
     async def async_update(self):
+        """Updates the sensor"""
         try:
             self._state = np.random.random()
         except:
