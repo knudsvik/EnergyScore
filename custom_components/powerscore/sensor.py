@@ -7,9 +7,13 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import SensorEntity, PLATFORM_SCHEMA
 from homeassistant.const import CONF_NAME
-
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.typing import (
+    ConfigType,
+    HomeAssistantType,
+    Optional,
+    DiscoveryInfoType,
+)
 
 from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY
 
@@ -28,11 +32,15 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 
 async def async_setup_platform(
-    config: ConfigType, async_add_entities: Callable
+    hass: HomeAssistantType,
+    config: ConfigType,
+    async_add_entities: Callable,
+    discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensors from YAML config"""
-    sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
-    async_add_entities(sensors)
+    # sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
+    # async_add_entities(sensors)
+    async_add_entities([PowerScore()])
 
 
 class PowerScore(SensorEntity):
