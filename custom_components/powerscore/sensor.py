@@ -5,7 +5,11 @@ import logging
 import numpy as np
 import voluptuous as vol
 
-from homeassistant.components.sensor import SensorEntity, PLATFORM_SCHEMA
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorStateClass,
+    PLATFORM_SCHEMA,
+)
 from homeassistant.const import CONF_NAME
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import (
@@ -40,11 +44,14 @@ async def async_setup_platform(
     """Set up the sensors from YAML config"""
     # sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
     # async_add_entities(sensors)
-    async_add_entities([PowerScore()])
+    async_add_entities([PowerScore()], update_before_add=True)
 
 
 class PowerScore(SensorEntity):
     """PowerScore Sensor class."""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = "%"
 
     def __init__(self):
         self._name = CONF_NAME
@@ -53,7 +60,7 @@ class PowerScore(SensorEntity):
         self._price = CONF_PRICE_ENTITY
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the sensor."""
         return self._name
 
@@ -68,6 +75,6 @@ class PowerScore(SensorEntity):
     async def async_update(self):
         """Updates the sensor"""
         try:
-            self._state = np.random.random()
+            self._state = np.random.random() * 100
         except:
             _LOGGER.exception("Could not update the PowerScore")
