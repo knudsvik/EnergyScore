@@ -44,7 +44,7 @@ async def async_setup_platform(
     """Set up the sensors from YAML config"""
     # sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
     # async_add_entities(sensors)
-    async_add_entities([PowerScore(hass, config)], update_before_add=True)
+    async_add_entities([PowerScore(hass, config)], update_before_add=False)
 
 
 class PowerScore(SensorEntity):
@@ -56,9 +56,12 @@ class PowerScore(SensorEntity):
     def __init__(self, hass, config):
         self._name = config[CONF_NAME]
         self._state = None
-        self._power = config[CONF_POWER_ENTITY]
-        self._price = config[CONF_PRICE_ENTITY]
-        self.attr = {"Power entity": self._power, "Price entity": self._price}
+        self._power_entity = config[CONF_POWER_ENTITY]
+        self._price_entity = config[CONF_PRICE_ENTITY]
+        self.attr = {
+            "power entity": self._power_entity,
+            "price entity": self._price_entity,
+        }
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
 
     @property
@@ -77,6 +80,7 @@ class PowerScore(SensorEntity):
     async def async_update(self):
         """Updates the sensor"""
         try:
-            self._state = np.random.random() * 100
+            self._state = self.hass.states.get(self._power_entity).state
+            # self._state = np.random.random() * 100
         except:
             _LOGGER.exception("Could not update the PowerScore")

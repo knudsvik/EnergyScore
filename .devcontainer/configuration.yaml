@@ -15,3 +15,7 @@ sensor:
     name: Heater Power Score 777
     power_entity: weather.forecast_home
     price_entity: sun.sun
+  - platform: powerscore
+    name: Another great sensor
+    power_entity: sensor.heater_power_score_777
+    price_entity: sun.sun
