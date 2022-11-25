@@ -19,7 +19,7 @@ from homeassistant.helpers.typing import (
     DiscoveryInfoType,
 )
 
-from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY
+from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -29,7 +29,7 @@ SCAN_INTERVAL = timedelta(minutes=1)
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_POWER_ENTITY): cv.entity_id,
+        vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
     }
 )
@@ -42,13 +42,13 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensors from YAML config"""
-    # sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
+    # sensors = [EnergyScore(sensor) for sensor in config[CONF_NAME]]
     # async_add_entities(sensors)
-    async_add_entities([PowerScore(hass, config)], update_before_add=False)
+    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
-class PowerScore(SensorEntity):
-    """PowerScore Sensor class."""
+class EnergyScore(SensorEntity):
+    """EnergyScore Sensor class."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
@@ -56,10 +56,10 @@ class PowerScore(SensorEntity):
     def __init__(self, hass, config):
         self._name = config[CONF_NAME]
         self._state = None
-        self._power_entity = config[CONF_POWER_ENTITY]
+        self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._price_entity = config[CONF_PRICE_ENTITY]
         self.attr = {
-            "power entity": self._power_entity,
+            "energy entity": self._energy_entity,
             "price entity": self._price_entity,
         }
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
@@ -80,7 +80,7 @@ class PowerScore(SensorEntity):
     async def async_update(self):
         """Updates the sensor"""
         try:
-            self._state = self.hass.states.get(self._power_entity).state
+            self._state = self.hass.states.get(self._energy_entity).state
             # self._state = np.random.random() * 100
         except:
-            _LOGGER.exception("Could not update the PowerScore")
+            _LOGGER.exception("Could not update the EnergyScore")

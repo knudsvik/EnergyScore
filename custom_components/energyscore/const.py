@@ -1,10 +1,10 @@
-"""Constants for PowerScore"""
+"""Constants for EnergyScore"""
 # Base component constants
-NAME = "PowerScore"
-DOMAIN = "powerscore"
+NAME = "EnergyScore"
+DOMAIN = "energyscore"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.0.1"
-ISSUE_URL = "https://github.com/knudsvik/powerscore/issues"
+ISSUE_URL = "https://github.com/knudsvik/energyscore/issues"
 
 # Icons
 ICON = "mdi:speedometer"
@@ -15,7 +15,7 @@ PLATFORMS = [SENSOR]
 
 # Configuration and options
 CONF_PRICE_ENTITY = "price_entity"
-CONF_POWER_ENTITY = "power_entity"
+CONF_ENERGY_ENTITY = "energy_entity"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

@@ -3,7 +3,7 @@ default_config:
 logger:
   default: info
   logs:
-    custom_components.powerscore: debug
+    custom_components.energyscore: debug
 
 # If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
 #debugpy:
@@ -11,11 +11,11 @@ logger:
 #  wait: True
 
 sensor:
-  - platform: powerscore
-    name: Heater Power Score 777
-    power_entity: weather.forecast_home
+  - platform: energyscore
+    name: Heater Energy Score 777
+    energy_entity: weather.forecast_home
     price_entity: sun.sun
-  - platform: powerscore
+  - platform: energyscore
     name: Another great sensor
-    power_entity: sensor.heater_power_score_777
-    price_entity: sun.sun
+    energy_entity: sun.sun
+    price_entity: sensor.heater_energy_score_777
