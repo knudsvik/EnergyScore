@@ -1,6 +1,6 @@
 """Sensor platform for integration_blueprint."""
 from datetime import timedelta
-from typing import Callable
+from typing import Callable, Any
 import logging
 import numpy as np
 import voluptuous as vol
@@ -19,7 +19,7 @@ from homeassistant.helpers.typing import (
     DiscoveryInfoType,
 )
 
-from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY, DOMAIN
+from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -59,7 +59,7 @@ class PowerScore(SensorEntity):
         self._power = config[CONF_POWER_ENTITY]
         self._price = config[CONF_PRICE_ENTITY]
         self.attr = {"Power entity": self._power, "Price entity": self._price}
-        self.entity_id = "sensor.powerscore_test_name"
+        self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
 
     @property
     def name(self) -> str:
@@ -67,7 +67,7 @@ class PowerScore(SensorEntity):
         return self._name
 
     @property
-    def state(self):
+    def state(self) -> Any:
         return self._state
 
     @property
