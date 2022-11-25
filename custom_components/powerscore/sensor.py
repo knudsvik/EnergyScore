@@ -19,7 +19,7 @@ from homeassistant.helpers.typing import (
     DiscoveryInfoType,
 )
 
-from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY
+from .const import CONF_POWER_ENTITY, CONF_PRICE_ENTITY, DOMAIN
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -53,11 +53,12 @@ class PowerScore(SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, entry_data):
-        self._name = entry_data[CONF_NAME]
+    def __init__(self, hass, config):
+        self._name = config[CONF_NAME]
         self._state = None
-        self._power = entry_data[CONF_POWER_ENTITY]
-        self._price = entry_data[CONF_PRICE_ENTITY]
+        self._power = config[CONF_POWER_ENTITY]
+        self._price = config[CONF_PRICE_ENTITY]
+        self.attr = {"Power entity": self._power, "Price entity": self._price}
         self.entity_id = "sensor.powerscore_test_name"
 
     @property
@@ -69,9 +70,9 @@ class PowerScore(SensorEntity):
     def state(self):
         return self._state
 
-    # @property
-    # def device_state_attributes(self) -> Dict[str, Any]:
-    #    return self.attrs
+    @property
+    def extra_state_attributes(self):
+        return self.attr
 
     async def async_update(self):
         """Updates the sensor"""

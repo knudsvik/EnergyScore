@@ -12,6 +12,6 @@ logger:
 
 sensor:
   - platform: powerscore
-    name: Heater Power Score
+    name: Heater Power Score 900
     power_entity: weather.forecast_home
     price_entity: sun.sun
