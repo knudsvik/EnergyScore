@@ -44,7 +44,7 @@ async def async_setup_platform(
     """Set up the sensors from YAML config"""
     # sensors = [PowerScore(sensor) for sensor in config[CONF_NAME]]
     # async_add_entities(sensors)
-    async_add_entities([PowerScore()], update_before_add=True)
+    async_add_entities([PowerScore(hass, config)], update_before_add=True)
 
 
 class PowerScore(SensorEntity):
@@ -53,11 +53,12 @@ class PowerScore(SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self):
-        self._name = CONF_NAME
+    def __init__(self, hass, entry_data):
+        self._name = entry_data[CONF_NAME]
         self._state = None
-        self._power = CONF_POWER_ENTITY
-        self._price = CONF_PRICE_ENTITY
+        self._power = entry_data[CONF_POWER_ENTITY]
+        self._price = entry_data[CONF_PRICE_ENTITY]
+        self.entity_id = "sensor.powerscore_test_name"
 
     @property
     def name(self) -> str:
