@@ -10,11 +10,11 @@ from homeassistant.components.sensor import (
     SensorStateClass,
     PLATFORM_SCHEMA,
 )
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import (
     ConfigType,
-    HomeAssistantType,
     Optional,
     DiscoveryInfoType,
 )
@@ -31,12 +31,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
+        vol.Optional(CONF_UNIQUE_ID): cv.string,
     }
 )
 
 
 async def async_setup_platform(
-    hass: HomeAssistantType,
+    hass: HomeAssistant,
     config: ConfigType,
     async_add_entities: Callable,
     discovery_info: Optional[DiscoveryInfoType] = None,
@@ -54,15 +55,20 @@ class EnergyScore(SensorEntity):
     _attr_native_unit_of_measurement = "%"
 
     def __init__(self, hass, config):
+        # self._attr_unique_id =
         self._name = config[CONF_NAME]
-        self._state = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._price_entity = config[CONF_PRICE_ENTITY]
+        self._state = None
         self.attr = {
             "energy entity": self._energy_entity,
             "price entity": self._price_entity,
         }
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
+        try:
+            self._attr_unique_id = config[CONF_UNIQUE_ID]
+        except:
+            pass
 
     @property
     def name(self) -> str:

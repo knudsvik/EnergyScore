@@ -12,10 +12,11 @@ logger:
 
 sensor:
   - platform: energyscore
-    name: Heater Energy Score 777
+    name: Heater Energy Score 778
     energy_entity: weather.forecast_home
     price_entity: sun.sun
+    unique_id: fknmekfe
   - platform: energyscore
-    name: Another great sensor
+    name: Another great senzor
     energy_entity: sun.sun
-    price_entity: sensor.heater_energy_score_777
+    price_entity: sensor.heater_energy_score_778
