@@ -5,3 +5,4 @@ venv
 .coverage
 .idea
 custom_components/hacs
+custom_components/nordpool
