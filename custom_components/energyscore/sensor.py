@@ -55,7 +55,6 @@ class EnergyScore(SensorEntity):
     _attr_native_unit_of_measurement = "%"
 
     def __init__(self, hass, config):
-        # self._attr_unique_id =
         self._name = config[CONF_NAME]
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._price_entity = config[CONF_PRICE_ENTITY]
