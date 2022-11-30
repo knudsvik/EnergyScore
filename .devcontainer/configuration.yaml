@@ -10,13 +10,20 @@ logger:
 #  start: True
 #  wait: True
 
+mqtt:
+  sensor:
+    - state_topic: "ha-dev/sensor/electricity_price/state"
+      name: electricity_price
+      unique_id: 001
+      unit_of_measurement: "NOK/kWh"
+    - state_topic: "ha-dev/sensor/total_energy_consumption/state"
+      name: total_energy_consumption
+      unique_id: 002
+      unit_of_measurement: "kWh"
+
 sensor:
   - platform: energyscore
-    name: Heater Energy Score 778
-    energy_entity: weather.forecast_home
-    price_entity: sun.sun
-    unique_id: fknmekfe
-  - platform: energyscore
-    name: Another great senzor
-    energy_entity: sun.sun
-    price_entity: sensor.heater_energy_score_778
+    name: My first energy score
+    energy_entity: sensor.total_energy_consumption
+    price_entity: sensor.electricity_price
+    unique_id: fknmekfefldmf
