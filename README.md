@@ -4,7 +4,7 @@
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout a day. If you use all of your energy in the most expensive hour it will score 0%, while if you use all your energy in the cheapest hour it will score 100%. This integration will not try to optimize your energy use, but is complementary to those like PowerSaver or PriceAnalyzer.
+EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout a day. If you use all of your energy in the most expensive hour it will score 0%, while if you use all your energy in the cheapest hour it will score 100%. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
 
 You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler.
 
