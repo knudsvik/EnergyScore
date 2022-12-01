@@ -93,18 +93,22 @@ class EnergyScore(SensorEntity):
 
     async def async_update(self):
         """Updates the sensor"""
-        now = dt.now()  # TODO: Check if this is UTC
+        now = dt.now()
 
         try:
-            self._current_price = self.hass.states.get(self._price_entity).state
-            self._current_energy = self.hass.states.get(self._energy_entity).state
+            self._current_price = round(
+                float(self.hass.states.get(self._price_entity).state), 2
+            )
+            self._current_energy = round(
+                float(self.hass.states.get(self._energy_entity).state), 2
+            )
 
-            self._prices[now.hour] = self._current_price
-            self._energy_total[now.hour] = self._current_energy
+            self._prices[int(now.hour)] = self._current_price
+            self._energy_total[int(now.hour)] = self._current_energy
 
-            if now.hour - 1 in self._energy_total:
+            if (int(now.hour) - int(1)) in self._energy_total:
                 self._energy[now.hour] = (
-                    self._current_energy - self._energy_total[now.hour - 1]
+                    self._current_energy - self._energy_total[int(now.hour) - 1]
                 )
 
             _LOGGER.debug(f"EnergyScore price update: {self._prices}")
@@ -117,7 +121,7 @@ class EnergyScore(SensorEntity):
             _LOGGER.exception("Could not update the EnergyScore")
 
 
-# TODO: Need to reset the dicts when new day somehow.
+# TODO: Need to reset the dicts when new day somehow. self last update var i går, then clear the list (men ta vare på total energi til første timeberegning)
 # if self._last_updated is None:
 #    self._prices = {}
 # elif self._last_updated.date() != now.date():
