@@ -65,11 +65,13 @@ class EnergyScore(SensorEntity):
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._last_updated = None
         self._price_entity = config[CONF_PRICE_ENTITY]
+        self._quality = None
         self._state = None
         self._yesterday_energy = None
         self.attr = {
             "energy entity": self._energy_entity,
             "price entity": self._price_entity,
+            "quality": self._quality,
         }
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
         try:
@@ -118,11 +120,23 @@ class EnergyScore(SensorEntity):
             elif self._yesterday_energy != None:
                 self._energy[now.hour] = self._current_energy - self._yesterday_energy
 
-            _LOGGER.debug(f"EnergyScore price update: {self._prices}")
-            _LOGGER.debug(f"EnergyScore total energy update: {self._energy_total}")
-            _LOGGER.debug(f"EnergyScore energy update: {self._energy}")
+            _LOGGER.debug(f"Price update: {self._prices}")
+            _LOGGER.debug(f"Energy update: {self._energy}")
+            _LOGGER.debug(f"Total energy update: {self._energy_total}")
 
             self._last_updated = now.date()
-            self._state = np.random.random() * 100
+            self._quality = (len(self._prices) + len(self._energy)) / 2 / int(now.hour)
+
+            self._price_array = np.array(list(self._prices.values()))
+            self._energy_array = np.array(list(self._energy.values()))
+            self._norm_prices = (self._price_array.max() - self._price_array) / (
+                self._price_array.max() - self._price_array.min()
+            )
+            self._norm_energy = self._energy_array / self._energy_array.sum()
+
+            _LOGGER.debug(f"Normalised prices: {self.__norm_prices}")
+            _LOGGER.debug(f"Normalised energy: {self._norm_energy}")
+
+            self._state = round(np.dot(self._norm_prices, self._norm_energy), 1)
         except:
             _LOGGER.exception("Could not update the EnergyScore")
