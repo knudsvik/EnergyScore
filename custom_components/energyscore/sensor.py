@@ -60,11 +60,13 @@ class EnergyScore(SensorEntity):
     def __init__(self, hass, config):
         self._current_price = None  # TODO: Not needed?
         self._current_energy = None  # TODO: Not needed? or maybe define it with :?
+        self._energy_total = {}
         self._name = config[CONF_NAME]
         self._energy_entity = config[CONF_ENERGY_ENTITY]
-        self._last_updated: datetime.datetime | None = None
+        self._last_updated = None
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._state = None
+        self._yesterday_energy = None
         self.attr = {
             "energy entity": self._energy_entity,
             "price entity": self._price_entity,
@@ -74,9 +76,6 @@ class EnergyScore(SensorEntity):
             self._attr_unique_id = config[CONF_UNIQUE_ID]
         except:
             pass
-        self._prices = {}
-        self._energy = {}
-        self._energy_total = {}
 
     @property
     def name(self) -> str:
@@ -94,6 +93,12 @@ class EnergyScore(SensorEntity):
     async def async_update(self):
         """Updates the sensor"""
         now = dt.now()
+        if self._last_updated != now.date():
+            self._prices = {}
+            self._energy = {}
+            if self._last_updated == now.date() - datetime.timedelta(1):
+                self._yesterday_energy = max(self._energy_total.values())
+            self._energy_total = {}
 
         try:
             self._current_price = round(
@@ -107,9 +112,11 @@ class EnergyScore(SensorEntity):
             self._energy_total[int(now.hour)] = self._current_energy
 
             if (int(now.hour) - int(1)) in self._energy_total:
-                self._energy[now.hour] = (
-                    self._current_energy - self._energy_total[int(now.hour) - 1]
+                self._energy[now.hour] = round(
+                    (self._current_energy - self._energy_total[int(now.hour) - 1]), 2
                 )
+            elif self._yesterday_energy != None:
+                self._energy[now.hour] = self._current_energy - self._yesterday_energy
 
             _LOGGER.debug(f"EnergyScore price update: {self._prices}")
             _LOGGER.debug(f"EnergyScore total energy update: {self._energy_total}")
@@ -119,10 +126,3 @@ class EnergyScore(SensorEntity):
             self._state = np.random.random() * 100
         except:
             _LOGGER.exception("Could not update the EnergyScore")
-
-
-# TODO: Need to reset the dicts when new day somehow. self last update var i går, then clear the list (men ta vare på total energi til første timeberegning)
-# if self._last_updated is None:
-#    self._prices = {}
-# elif self._last_updated.date() != now.date():
-#    self._prices = {}
