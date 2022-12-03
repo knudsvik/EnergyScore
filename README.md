@@ -8,6 +8,8 @@ EnergyScore is a metric that scores how well you are utilizing changing energy p
 
 You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler.
 
+Each sensor has a quality attribute with a score from 0 (no data this day) to 1 (data for all hours of this day).
+
 ## Installation
 
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
@@ -24,9 +26,10 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
         price_entity: sensor.electricity_price
         energy_entity: sensor.home_total_energy
     ```
-7. Restart Home Assistant
+7. Restart Home Assistant. It may take up to an hour to get enough data to calculate the EnergyScore.
 
 ### Configuration variables
+
 **name** *string* REQUIRED <br>
 Name for the platform entity which must be unique within the platform.
 
