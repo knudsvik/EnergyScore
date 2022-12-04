@@ -8,7 +8,7 @@ EnergyScore is a metric that scores how well you are utilizing changing energy p
 
 You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler.
 
-Each sensor has a quality attribute with a score from 0 (no data this day) to 1 (data for all hours of this day).
+Each sensor has a quality attribute with a score from 0 (no data this day) to 1 (data for all hours of this day). If a sensor has price and energy data for 18 hours of a day, the quality will be 0.75.
 
 ## Installation
 
@@ -41,6 +41,17 @@ The entity_id of an entity which provides the current hourly energy price as the
 
 **energy_entity** *string* REQUIRED <br>
 The entity_id of an entity which provides the total increasing energy use as the state, e.g. from Tibber or PowerCalc integrations or a state from a device.
+
+### Debugging
+
+The integration can be debugged with following code in your `configuration.yaml` which will provide information on sensor updates in the Home Assistant log.
+
+```yaml
+logger:
+  logs:
+    custom_components.energyscore: debug
+```
+
 
 ## Contributions are welcome!
 

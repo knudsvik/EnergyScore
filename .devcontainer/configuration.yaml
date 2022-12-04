@@ -20,6 +20,14 @@ mqtt:
       name: total_energy_consumption
       unique_id: 002
       unit_of_measurement: "kWh"
+    - state_topic: "ha-dev/sensor/dishwasher_energy/state"
+      name: dishwasher_energy
+      unique_id: 004
+      unit_of_measurement: "kWh"
+    - state_topic: "ha-dev/sensor/washer_energy/state"
+      name: washer_energy
+      unique_id: 005
+      unit_of_measurement: "kWh"
 
 sensor:
   - platform: energyscore
@@ -27,3 +35,13 @@ sensor:
     energy_entity: sensor.total_energy_consumption
     price_entity: sensor.electricity_price
     unique_id: fknmekfefldmf
+  - platform: energyscore
+    name: Dishwasher Energy Score
+    energy_entity: sensor.dishwasher_energy
+    price_entity: sensor.electricity_price
+    unique_id: fknmekfefldmffdefdfd
+  - platform: energyscore
+    name: Washer Energy Score
+    energy_entity: sensor.washer_energy
+    price_entity: sensor.electricity_price
+    unique_id: fknmekfefldmfsdfsdfsdgdsg
