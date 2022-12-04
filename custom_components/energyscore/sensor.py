@@ -112,7 +112,7 @@ class EnergyScore(SensorEntity):
             self._energy_total = {}
 
         self._energy_total[int(now.hour)] = self._current_energy
-        _LOGGER.debug("%s - Total energy update: %s", self._name, self._energy_total)
+        _LOGGER.debug("%s - Total energy: %s", self._name, self._energy_total)
 
         if (int(now.hour) - int(1)) in self._energy_total:
             self._energy[now.hour] = round(
@@ -163,7 +163,9 @@ class EnergyScore(SensorEntity):
                 self._current_price == "unavailable"
                 or self._current_energy == "unavailable"
             ):
-                _LOGGER.exception("%s - Price and/or energy data is unavailable", self._name)
+                _LOGGER.exception(
+                    "%s - Price and/or energy data is unavailable", self._name
+                )
                 return
             else:
                 self._current_price = round(float(self._current_price), 2)
@@ -176,7 +178,8 @@ class EnergyScore(SensorEntity):
                 self._state = self.process_new_data()
             except:
                 _LOGGER.exception(
-                    "%s - Could not process the updated data and produce the new EnergyScore", self._name
+                    "%s - Could not process the updated data and produce the new EnergyScore",
+                    self._name,
                 )
             else:
                 self._last_updated = dt.now().date()
