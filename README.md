@@ -4,11 +4,11 @@
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout a day. If you use all of your energy in the most expensive hour it will score 0%, while if you use all your energy in the cheapest hour it will score 100%. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
+<img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/logo.png" align="center" title="EnergyScore"/>
 
-You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler.
+EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout a day. The EnergyScore will be 0% if you use all of your energy in the most expensive hour, 100% in the cheapest hour, but most likely somewhere in between depending on how well you are able to match your energy use with cheap prices. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
 
-Each sensor has a quality attribute with a score from 0 (no data this day) to 1 (data for all hours of this day). If a sensor has price and energy data for 18 hours of a day, the quality will be 0.75.
+You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler. Each sensor has a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of a day, the quality will be 0.75. The higher the quality is, the more you can trust the EnergyScore.
 
 ## Installation
 
