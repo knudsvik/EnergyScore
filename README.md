@@ -1,7 +1,5 @@
 <img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/logo.png" title="EnergyScore"/>
 
-<br>
-
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
