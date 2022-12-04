@@ -1,10 +1,11 @@
-# EnergyScore for Home Assistant
+<img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/logo.png" title="EnergyScore"/>
+
+<br>
 
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-<img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/logo.png" align="center" title="EnergyScore"/>
 
 EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout a day. The EnergyScore will be 0% if you use all of your energy in the most expensive hour, 100% in the cheapest hour, but most likely somewhere in between depending on how well you are able to match your energy use with cheap prices. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
 
