@@ -101,7 +101,7 @@ class EnergyScore(SensorEntity):
     def process_new_data(self):
         """Processes the update data"""
         now = dt.now()
-        self._quality = len(self._prices) / (int(now.hour) + 1)
+        self._quality = len(self._prices) / (int(now.hour) + 1) * 100
 
         if self._last_updated != now.date():
             self._quality = 0
@@ -133,7 +133,8 @@ class EnergyScore(SensorEntity):
         _LOGGER.debug("%s - Energy: %s", self._name, self._energy)
         _LOGGER.debug("%s - Price: %s", self._name, self._prices)
 
-        self._quality = len(self._prices) / (int(now.hour) + 1)
+        self._quality = len(self._prices) / (int(now.hour) + 1) * 100
+        _LOGGER.debug("%s - Quality: %s", self._name, self._quality)
 
         self._price_array = np.array(list(self._prices.values()))
         if len(self._prices) > 1:
@@ -141,7 +142,7 @@ class EnergyScore(SensorEntity):
                 self._price_array.max() - self._price_array.min()
             )
         elif len(self._prices) == 1:
-            self._norm_prices = 1
+            self._norm_prices = self._price_array / self._price_array.sum()
         _LOGGER.debug("%s - Normalised prices: %s", self._name, self._norm_prices)
 
         self._energy_array = np.array(list(self._energy.values()))
@@ -151,7 +152,13 @@ class EnergyScore(SensorEntity):
             self._norm_energy = self._energy_array / self._energy_array.sum()
         _LOGGER.debug("%s - Normalised energy: %s", self._name, self._norm_energy)
 
-        return round(np.dot(self._norm_prices, self._norm_energy), 1)
+        self._score = np.dot(self._norm_prices, self._norm_energy)
+
+        _LOGGER.debug("%s - Score: %s", self._name, self._score)
+
+        return self._score * 100
+        # Should also return this *100.. men funker bare når scalar.. (prob i første timen på linje 144)
+        # TypeError: type numpy.ndarray doesn't define __round__ method
 
     async def async_update(self):
         """Updates the sensor"""
