@@ -25,7 +25,7 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
         price_entity: sensor.electricity_price
         energy_entity: sensor.home_total_energy
     ```
-7. Restart Home Assistant. It may take up to an hour to get enough data to calculate the EnergyScore.
+7. Restart Home Assistant. It may take up to two hours to get enough data to calculate the EnergyScore.
 
 ### Configuration variables
 
