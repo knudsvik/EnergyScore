@@ -72,7 +72,7 @@ class EnergyScore(SensorEntity):
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._prices = {}
         self._quality = 0
-        self._state = None
+        self._state = 100
         self._yesterday_energy = None
         self.attr = {
             "energy entity": self._energy_entity,
@@ -101,7 +101,6 @@ class EnergyScore(SensorEntity):
     def process_new_data(self):
         """Processes the update data"""
         now = dt.now()
-        self._quality = len(self._prices) / (int(now.hour) + 1) * 100
 
         if self._last_updated != now.date():
             self._quality = 0
@@ -127,13 +126,13 @@ class EnergyScore(SensorEntity):
             _LOGGER.debug(
                 "%s - Not enough data to update the EnergyScore yet", self._name
             )
-            return
+            return 100
 
         self._prices[int(now.hour)] = self._current_price
         _LOGGER.debug("%s - Energy: %s", self._name, self._energy)
         _LOGGER.debug("%s - Price: %s", self._name, self._prices)
 
-        self._quality = len(self._prices) / (int(now.hour) + 1) * 100
+        self._quality = round(len(self._prices) / (int(now.hour) + 1) * 100, 1)
         _LOGGER.debug("%s - Quality: %s", self._name, self._quality)
 
         self._price_array = np.array(list(self._prices.values()))
@@ -147,7 +146,7 @@ class EnergyScore(SensorEntity):
 
         self._energy_array = np.array(list(self._energy.values()))
         if self._energy_array.sum() == 0:
-            self._norm_energy = list(self._energy.values())
+            return 100
         else:
             self._norm_energy = self._energy_array / self._energy_array.sum()
         _LOGGER.debug("%s - Normalised energy: %s", self._name, self._norm_energy)
@@ -156,9 +155,7 @@ class EnergyScore(SensorEntity):
 
         _LOGGER.debug("%s - Score: %s", self._name, self._score)
 
-        return self._score * 100
-        # Should also return this *100.. men funker bare når scalar.. (prob i første timen på linje 144)
-        # TypeError: type numpy.ndarray doesn't define __round__ method
+        return int(self._score * 100)
 
     async def async_update(self):
         """Updates the sensor"""
@@ -170,9 +167,7 @@ class EnergyScore(SensorEntity):
                 self._current_price == "unavailable"
                 or self._current_energy == "unavailable"
             ):
-                _LOGGER.exception(
-                    "%s - Price and/or energy data is unavailable", self._name
-                )
+                _LOGGER.info("%s - Price and/or energy data is unavailable", self._name)
                 return
             else:
                 self._current_price = round(float(self._current_price), 2)
@@ -192,4 +187,4 @@ class EnergyScore(SensorEntity):
                 self._last_updated = dt.now().date()
 
 
-# TODO: What if not used energy? i.e. same energy in all hours.. 100% score?
+# TODO: Quality is not updated. Think it needs to be in the update method.
