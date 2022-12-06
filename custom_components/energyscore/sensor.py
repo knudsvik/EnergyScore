@@ -22,7 +22,7 @@ from homeassistant.helpers.typing import (
 )
 from homeassistant.util import dt
 
-from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY
+from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, QUALITY
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -75,9 +75,9 @@ class EnergyScore(SensorEntity):
         self._state = 100
         self._yesterday_energy = None
         self.attr = {
-            "energy entity": self._energy_entity,
-            "price entity": self._price_entity,
-            "quality": self._quality,
+            CONF_ENERGY_ENTITY: self._energy_entity,
+            CONF_PRICE_ENTITY: self._price_entity,
+            QUALITY: self._quality,
         }
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
         try:
@@ -103,7 +103,7 @@ class EnergyScore(SensorEntity):
         now = dt.now()
 
         if self._last_updated != now.date():
-            self._quality = 0
+            self._quality = 0  # Need to update?
             self._prices = {}
             self._energy = {}
             if self._last_updated == now.date() - datetime.timedelta(1):
@@ -132,7 +132,8 @@ class EnergyScore(SensorEntity):
         _LOGGER.debug("%s - Energy: %s", self._name, self._energy)
         _LOGGER.debug("%s - Price: %s", self._name, self._prices)
 
-        self._quality = round(len(self._prices) / (int(now.hour) + 1) * 100, 1)
+        self._quality = round(len(self._prices) / (int(now.hour) + 1), 2)
+        self.attr[QUALITY] = self._quality
         _LOGGER.debug("%s - Quality: %s", self._name, self._quality)
 
         self._price_array = np.array(list(self._prices.values()))
@@ -185,6 +186,3 @@ class EnergyScore(SensorEntity):
                 )
             else:
                 self._last_updated = dt.now().date()
-
-
-# TODO: Quality is not updated. Think it needs to be in the update method.
