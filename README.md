@@ -13,12 +13,25 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
 
 ## Installation
 
+### Part 1 (HACS - preferred)
+
+1. Open HACS, click on Integrations, then the three dots in upper right corner and choose Custom repositories.
+2. Copy the URL from this GitHub repository and paste it into the Repository section
+3. Choos Integration as the Category
+4. Restart Home Assistant
+
+### Part 1 (Manual alternative)
+
 1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 2. If you do not have a `custom_components` directory (folder) there, you need to create it.
 3. In the `custom_components` directory (folder) create a new folder called `energyscore`.
 4. Download _all_ the files from the `custom_components/energyscore/` directory (folder) in this repository.
 5. Place the files you downloaded in the new directory (folder) you created.
-6. Add following to your `configuration.yaml` (and customise with your entities and unique_id):
+6. Restart Home Assistant
+
+### Part 2
+
+1. Add following to your `configuration.yaml`
     ```yaml
     sensor:
       - platform: energyscore
@@ -27,7 +40,8 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
         price_entity: sensor.electricity_price
         energy_entity: sensor.heater_energy
     ```
-7. Restart Home Assistant. It may take up to two hours to get enough data to calculate the EnergyScore.
+2. Customise the configuration with your own entities and unique_id's
+3. Restart Home Assistant. It may take up to two hours to get enough data to calculate the EnergyScore.
 
 ### Configuration variables
 
