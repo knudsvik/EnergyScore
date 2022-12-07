@@ -4,5 +4,6 @@ venv
 .venv
 .coverage
 .idea
+.DS_Store
 custom_components/hacs
 custom_components/nordpool
