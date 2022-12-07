@@ -22,7 +22,7 @@ from homeassistant.helpers.typing import (
 )
 from homeassistant.util import dt
 
-from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, QUALITY
+from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, ICON, QUALITY
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -79,6 +79,7 @@ class EnergyScore(SensorEntity):
             CONF_PRICE_ENTITY: self._price_entity,
             QUALITY: self._quality,
         }
+        self._attr_icon: str = ICON
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
         try:
             self._attr_unique_id = config[CONF_UNIQUE_ID]
