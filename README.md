@@ -25,7 +25,7 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
         name: Heater Energy Score
         unique_id: AC816DB0-868A-431C-92AE-CBD46A864DC5
         price_entity: sensor.electricity_price
-        energy_entity: sensor.home_total_energy
+        energy_entity: sensor.heater_energy
     ```
 7. Restart Home Assistant. It may take up to two hours to get enough data to calculate the EnergyScore.
 
