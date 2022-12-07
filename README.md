@@ -17,8 +17,9 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
 
 1. Open HACS, click on Integrations, then the three dots in upper right corner and choose Custom repositories.
 2. Copy the URL from this GitHub repository and paste it into the Repository section
-3. Choos Integration as the Category
-4. Restart Home Assistant
+3. Choose Integration as the Category
+4. Find the newly added integration EnergyScore, open it and and click Download in the bottom and then follow instructions
+5. Restart Home Assistant
 
 ### Part 1 (Manual alternative)
 
