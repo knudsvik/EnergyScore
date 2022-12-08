@@ -1,0 +1,24 @@
+name: Version Bump Check
+on: [pull_request]
+
+jobs:
+  version_bump_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Change into custom_components/energy_score directory
+        run: cd custom_components/energy_score
+      - name: Extract version from JSON file
+        run: |
+          cat manifest.json | jq '.version' > current_version.txt
+      - name: Get latest release version
+        run: |
+          git tag --sort=-v:refname | head -n 1 > latest_release_version.txt
+      - name: Check for version bump
+        run: |
+          if ! cmp -s current_version.txt latest_release_version.txt; then
+            echo "Version bump detected!"
+          else
+            echo "No version bump detected."
+            exit 1
+          fi
