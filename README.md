@@ -2,6 +2,8 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub Activity][commits-shield]][commits]
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/knudsvik/EnergyScore)
+![GitHub downloads](https://img.shields.io/github/downloads/knudsvik/EnergyScore/total)
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
