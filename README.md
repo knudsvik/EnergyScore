@@ -1,7 +1,7 @@
 <img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/logo.png" title="EnergyScore"/>
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![analytics]
+[![hacs_badge]](https://github.com/hacs/integration)
+[![analytics_badge]]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
@@ -81,5 +81,6 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=flat
 [commits-shield]: https://img.shields.io/github/commit-activity/y/knudsvik/energyscore
 [commits]: https://github.com/knudsvik/energyscore/commits/master
+[hacs_badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
 [license-shield]: https://img.shields.io/github/license/knudsvik/energyscore
-[analyticsbadge]https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.energyscore.total
+[analytics_badge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.energyscore.total
