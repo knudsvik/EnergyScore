@@ -9,9 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Change into custom_components/energyscore directory
-        run: cd $GITHUB_WORKSPACE/custom_components/energyscore
       - name: Extract version from JSON file
+        working-directory: ./custom_components/energyscore
         run: |
           cat manifest.json | jq '.version' > current_version.txt
       - name: Get latest release version
