@@ -16,7 +16,7 @@ jobs:
           cat current_version.txt
       - name: Get latest release version
         run: |
-          git tag --sort=-v:refname | head -n 1 > latest_release_version.txt
+          git describe --abbrev=0 > latest_release_version.txt
           cat latest_release_version.txt
       - name: Check for version bump
         run: |
