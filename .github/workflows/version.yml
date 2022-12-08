@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Change into custom_components/energyscore directory
-        run: cd custom_components/energyscore
+        run: cd $GITHUB_WORKSPACE/custom_components/energyscore
       - name: Extract version from JSON file
         run: |
           cat manifest.json | jq '.version' > current_version.txt
