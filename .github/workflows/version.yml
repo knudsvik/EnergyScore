@@ -1,5 +1,8 @@
 name: Version Bump Check
-on: [pull_request]
+on:
+  push:
+    branches:
+      - '*'
 
 jobs:
   version_bump_check:
