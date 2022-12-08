@@ -1,7 +1,7 @@
 <img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/logo.png" title="EnergyScore"/>
 
 [![hacs_badge]](https://github.com/hacs/integration)
-[![analytics_badge]]
+![analytics_badge]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
