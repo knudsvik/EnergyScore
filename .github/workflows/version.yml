@@ -12,10 +12,10 @@ jobs:
       - name: Extract version from JSON file
         working-directory: ./custom_components/energyscore
         run: |
-          cat manifest.json | jq '.version' > current_version.txt
+          cat -v manifest.json | jq '.version' > current_version.txt
       - name: Get latest release version
         run: |
-          git tag --sort=-v:refname | head -n 1 > latest_release_version.txt
+          git -v tag --sort=-v:refname | head -n 1 > latest_release_version.txt
       - name: Check for version bump
         run: |
           if ! cmp -s current_version.txt latest_release_version.txt; then
