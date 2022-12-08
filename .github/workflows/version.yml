@@ -12,7 +12,7 @@ jobs:
       - name: Extract version from JSON file
         working-directory: ./custom_components/energyscore
         run: |
-          cat -v manifest.json | jq '.version' > current_version.txt
+          cat manifest.json | jq '.version' > current_version.txt
           cat current_version.txt
       - name: Get latest release version
         run: |
@@ -20,9 +20,15 @@ jobs:
           cat latest_release_version.txt
       - name: Check for version bump
         run: |
-          if ! cmp -s current_version.txt latest_release_version.txt; then
-            echo "Version bump detected!"
+          # Extract version numbers from .txt files
+          current_version=$(cat current_version.txt | jq -r '.version')
+          latest_release_version=$(cat latest_release_version.txt | jq -r '.version')
+
+          # Compare version numbers numerically using the bc command
+          if [ $(echo "$current_version > $latest_release_version" | bc) -eq 1 ]; then
+            echo "Current version is higher than release version!"
           else
-            echo "No version bump detected."
+            echo "Current version is not higher than release version."
             exit 1
           fi
+
