@@ -6,8 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Change into custom_components/energy_score directory
-        run: cd custom_components/energy_score
+      - name: Change into custom_components/energyscore directory
+        run: cd custom_components/energyscore
       - name: Extract version from JSON file
         run: |
           cat manifest.json | jq '.version' > current_version.txt
