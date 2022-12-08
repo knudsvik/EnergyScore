@@ -16,7 +16,7 @@ jobs:
           cat current_version.txt
       - name: Get latest release version
         run: |
-          git describe --abbrev=0 > latest_release_version.txt
+          git describe --abbrev=0 --match='v[0-9]+\.[0-9]+\.[0-9]+' > latest_release_version.txt
           cat latest_release_version.txt
       - name: Check for version bump
         run: |
