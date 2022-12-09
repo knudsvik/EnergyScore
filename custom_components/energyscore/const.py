@@ -22,3 +22,4 @@ DEFAULT_NAME = DOMAIN
 
 # Other
 QUALITY = "quality"
+ENERGY_YESTERDAY = "energy_yesterday"

@@ -28,7 +28,13 @@ from homeassistant.helpers.typing import (
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt
 
-from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, ICON, QUALITY
+from .const import (
+    CONF_ENERGY_ENTITY,
+    CONF_PRICE_ENTITY,
+    ENERGY_YESTERDAY,
+    ICON,
+    QUALITY,
+)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -79,11 +85,11 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._prices = {}
         self._quality = 0
         self._state = 100
-        self._yesterday_energy = None
         self.attr = {
             CONF_ENERGY_ENTITY: self._energy_entity,
             CONF_PRICE_ENTITY: self._price_entity,
             QUALITY: self._quality,
+            ENERGY_YESTERDAY: None,
         }
         self._attr_icon: str = ICON
         self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
@@ -115,6 +121,8 @@ class EnergyScore(SensorEntity, RestoreEntity):
             _LOGGER.debug("Restored %s", self._name)
             # BY THE WAY -- The price and energy arrays should also be stored in the attr to be restored..
             self._state = last_state.state
+            if ENERGY_YESTERDAY in last_state.attributes:
+                self.attr[ENERGY_YESTERDAY] = last_state.attributes[ENERGY_YESTERDAY]
             self.attr[QUALITY] = last_state.attributes[QUALITY]
         else:
             _LOGGER.debug("Was not able to restore %s", self._name)
@@ -128,7 +136,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
             self._prices = {}
             self._energies = {}
             if self._last_updated == now.date() - datetime.timedelta(1):
-                self._yesterday_energy = max(self._energy_total.values())
+                self.attr[ENERGY_YESTERDAY] = max(self._energy_total.values())
             self._energy_total = {}
 
         self._energy_total[int(now.hour)] = self._energy.state
@@ -139,9 +147,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
                 (self._energy.state - self._energy_total[int(now.hour) - 1]),
                 2,  # Should maybe check highest key instead (what if hours w/o data)?
             )
-        elif self._yesterday_energy is not None:
+        elif self.attr[ENERGY_YESTERDAY] is not None:
             self._energies[now.hour] = round(
-                self._energy.state - self._yesterday_energy, 2
+                self._energy.state - self.attr[ENERGY_YESTERDAY], 2
             )
         else:
             _LOGGER.debug(
