@@ -136,10 +136,12 @@ class EnergyScore(SensorEntity, RestoreEntity):
                         self.attr[attr] = {
                             int(k): v for k, v in self.attr[attr].items()
                         }
-                if type(self.attr[LAST_UPDATED]) == str:
-                    self.attr[LAST_UPDATED] = datetime.datetime.strptime(
-                        self.attr[LAST_UPDATED], "%Y-%m-%dT%H:%M:%S.%f%z"
-                    )
+                    if attr == LAST_UPDATED and isinstance(
+                        self.attr[LAST_UPDATED], str
+                    ):
+                        self.attr[LAST_UPDATED] = datetime.datetime.strptime(
+                            self.attr[LAST_UPDATED], "%Y-%m-%dT%H:%M:%S.%f%z"
+                        )
             _LOGGER.debug("Restored %s", self._name)
         else:
             _LOGGER.debug("Was not able to restore %s", self._name)
