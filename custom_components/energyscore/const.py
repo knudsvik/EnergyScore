@@ -21,4 +21,9 @@ CONF_ENERGY_ENTITY = "energy_entity"
 DEFAULT_NAME = DOMAIN
 
 # Other
+ENERGY_TOTAL = "total_energy"
+ENERGY_YESTERDAY = "energy_yesterday"
+ENERGIES = "energy"
+LAST_UPDATED = "last_updated"
+PRICES = "price"
 QUALITY = "quality"
