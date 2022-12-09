@@ -25,6 +25,7 @@ from homeassistant.helpers.typing import (
     Optional,
     DiscoveryInfoType,
 )
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt
 
 from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, ICON, QUALITY
@@ -56,7 +57,7 @@ async def async_setup_platform(
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
-class EnergyScore(SensorEntity):
+class EnergyScore(SensorEntity, RestoreEntity):
     """EnergyScore Sensor class."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -103,6 +104,20 @@ class EnergyScore(SensorEntity):
     @property
     def extra_state_attributes(self):
         return self.attr
+
+    async def async_added_to_hass(self) -> None:
+        """Restore last state."""
+        _LOGGER.debug("Trying to restore: %s", self._name)
+        await super().async_added_to_hass()
+        if (
+            last_state := await self.async_get_last_state()
+        ) and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+            _LOGGER.debug("Restored %s", self._name)
+            # BY THE WAY -- The price and energy arrays should also be stored in the attr to be restored..
+            self._state = last_state.state
+            self.attr[QUALITY] = last_state.attributes[QUALITY]
+        else:
+            _LOGGER.debug("Was not able to restore %s", self._name)
 
     def process_new_data(self):
         """Processes the update data"""
