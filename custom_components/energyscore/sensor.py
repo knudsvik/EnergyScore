@@ -12,7 +12,12 @@ from homeassistant.components.sensor import (
     SensorStateClass,
     PLATFORM_SCHEMA,
 )
-from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
+from homeassistant.const import (
+    CONF_NAME,
+    CONF_UNIQUE_ID,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+)
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import (
@@ -58,16 +63,16 @@ class EnergyScore(SensorEntity):
     _attr_native_unit_of_measurement = "%"
 
     def __init__(self, hass, config):
-        self._current_price = None  # TODO: Not needed?
-        self._current_energy = None  # TODO: Not needed? or maybe define it with :?
+        self._energies = {}
+        self._energy = None  # TODO: Not needed? or maybe define it with :?
         self._energy_total = {}
-        self._energy = {}
         self._energy_array = np.array(None)
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._last_updated = None
         self._name = config[CONF_NAME]
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
+        self._price = None  # TODO: Not needed?
         self._price_array = np.array(None)
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._prices = {}
@@ -106,22 +111,22 @@ class EnergyScore(SensorEntity):
         if self._last_updated != now.date():
             self._quality = 0  # Need to update?
             self._prices = {}
-            self._energy = {}
+            self._energies = {}
             if self._last_updated == now.date() - datetime.timedelta(1):
                 self._yesterday_energy = max(self._energy_total.values())
             self._energy_total = {}
 
-        self._energy_total[int(now.hour)] = self._current_energy
+        self._energy_total[int(now.hour)] = self._energy.state
         _LOGGER.debug("%s - Total energy: %s", self._name, self._energy_total)
 
         if (int(now.hour) - int(1)) in self._energy_total:
-            self._energy[now.hour] = round(
-                (self._current_energy - self._energy_total[int(now.hour) - 1]),
+            self._energies[now.hour] = round(
+                (self._energy.state - self._energy_total[int(now.hour) - 1]),
                 2,  # Should maybe check highest key instead (what if hours w/o data)?
             )
         elif self._yesterday_energy is not None:
-            self._energy[now.hour] = round(
-                self._current_energy - self._yesterday_energy, 2
+            self._energies[now.hour] = round(
+                self._energy.state - self._yesterday_energy, 2
             )
         else:
             _LOGGER.debug(
@@ -129,8 +134,8 @@ class EnergyScore(SensorEntity):
             )
             return 100
 
-        self._prices[int(now.hour)] = self._current_price
-        _LOGGER.debug("%s - Energy: %s", self._name, self._energy)
+        self._prices[int(now.hour)] = self._price.state
+        _LOGGER.debug("%s - Energy: %s", self._name, self._energies)
         _LOGGER.debug("%s - Price: %s", self._name, self._prices)
 
         self._quality = round(len(self._prices) / (int(now.hour) + 1), 2)
@@ -146,7 +151,7 @@ class EnergyScore(SensorEntity):
             self._norm_prices = self._price_array / self._price_array.sum()
         _LOGGER.debug("%s - Normalised prices: %s", self._name, self._norm_prices)
 
-        self._energy_array = np.array(list(self._energy.values()))
+        self._energy_array = np.array(list(self._energies.values()))
         if self._energy_array.sum() == 0:
             return 100
         else:
@@ -162,18 +167,18 @@ class EnergyScore(SensorEntity):
     async def async_update(self):
         """Updates the sensor"""
         try:
-            self._current_price = self.hass.states.get(self._price_entity).state
-            self._current_energy = self.hass.states.get(self._energy_entity).state
+            self._price = self.hass.states.get(self._price_entity)
+            self._energy = self.hass.states.get(self._energy_entity)
 
-            if (
-                self._current_price == "unavailable"
-                or self._current_energy == "unavailable"
-            ):
+            if self._price.state in (
+                STATE_UNAVAILABLE,
+                STATE_UNKNOWN,
+            ) or self._energy.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
                 _LOGGER.info("%s - Price and/or energy data is unavailable", self._name)
                 return
             else:
-                self._current_price = round(float(self._current_price), 2)
-                self._current_energy = round(float(self._current_energy), 2)
+                self._price.state = round(float(self._price.state), 2)
+                self._energy.state = round(float(self._energy.state), 2)
 
         except:
             _LOGGER.exception("%s - Could not fetch price and energy data", self._name)
