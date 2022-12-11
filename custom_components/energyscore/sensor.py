@@ -62,8 +62,6 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensors from YAML config"""
-    # sensors = [EnergyScore(sensor) for sensor in config[CONF_NAME]]
-    # async_add_entities(sensors)
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
@@ -108,6 +106,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
     @property
     def state(self) -> Any:
+        """Return the state of the sensor."""
         return self._state
 
     @property
