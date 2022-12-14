@@ -1,13 +1,15 @@
-from pytest_homeassistant_custom_component.common import MockPlatform
-from custom_components.energyscore.const import DOMAIN
-from custom_components.energyscore.sensor import async_setup_platform
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+from custom_components.energyscore.const import DOMAIN, LAST_UPDATED
+from custom_components.energyscore.sensor import EnergyScore, async_setup_platform
 
-from .const import FAKE_CONFIG_DATA
+from .const import MOCK_CONFIG_DATA
 
 
 async def test_energyscore(hass):
     """Test EnergyScore config."""
-    entry = MockPlatform(async_setup_platform=async_setup_platform)
+    config = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG_DATA, entry_id="test")
+
+    assert await async_setup_platform(hass, config, async_add_entities)
     await hass.async_block_till_done()
 
     assert "energyscore" in hass.config.components
