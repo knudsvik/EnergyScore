@@ -209,8 +209,8 @@ class EnergyScore(SensorEntity, RestoreEntity):
     async def async_update(self):
         """Updates the sensor"""
         try:
-            self._price = self.hass.states.get(self._price_entity)
-            self._energy = self.hass.states.get(self._energy_entity)
+            self._price = await self.hass.states.get(self._price_entity)
+            self._energy = await self.hass.states.get(self._energy_entity)
 
             if self._price.state in (
                 STATE_UNAVAILABLE,
