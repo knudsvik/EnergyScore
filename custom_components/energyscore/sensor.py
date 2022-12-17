@@ -20,6 +20,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
+import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.typing import (
     ConfigType,
     Optional,
@@ -62,7 +63,7 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensors from YAML config"""
-    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
+    async_add_entities([EnergyScore(hass, config)], update_before_add=True)
 
 
 class EnergyScore(SensorEntity, RestoreEntity):
@@ -98,6 +99,11 @@ class EnergyScore(SensorEntity, RestoreEntity):
             self._attr_unique_id = config[CONF_UNIQUE_ID]
         except:
             pass
+
+        entity_reg = er.async_get(hass)
+        entity = entity_reg.async_get(self._price_entity)  # await?
+
+        print(entity.unique_id)
 
     @property
     def name(self) -> str:
