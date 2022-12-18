@@ -1,16 +1,13 @@
-"""Sensor platform for integration_blueprint."""
+"""Sensor platform for energyscore."""
 import datetime
 from datetime import timedelta
-from typing import Callable, Any
 import logging
-
-import numpy as np
-import voluptuous as vol
+from typing import Any, Callable
 
 from homeassistant.components.sensor import (
+    PLATFORM_SCHEMA,
     SensorEntity,
     SensorStateClass,
-    PLATFORM_SCHEMA,
 )
 from homeassistant.const import (
     CONF_NAME,
@@ -21,13 +18,11 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.entity_registry as er
-from homeassistant.helpers.typing import (
-    ConfigType,
-    Optional,
-    DiscoveryInfoType,
-)
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, Optional
 from homeassistant.util import dt
+import numpy as np
+import voluptuous as vol
 
 from .const import (
     CONF_ENERGY_ENTITY,
@@ -63,7 +58,7 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensors from YAML config"""
-    async_add_entities([EnergyScore(hass, config)], update_before_add=True)
+    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
 class EnergyScore(SensorEntity, RestoreEntity):
@@ -77,6 +72,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._energy_array = np.array(None)
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._name = config[CONF_NAME]
+        self._nordpool = False
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
         self._price = None  # TODO: Not needed?
@@ -101,9 +97,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
             pass
 
         entity_reg = er.async_get(hass)
-        entity = entity_reg.async_get(self._price_entity)  # await?
 
-        print(entity.unique_id)
+        if entity_reg.async_get(self._price_entity).platform == "nordpool":
+            self._nordpool = True
 
     @property
     def name(self) -> str:

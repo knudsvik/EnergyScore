@@ -1,26 +1,45 @@
-from custom_components.energyscore.const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY
+from homeassistant.const import CONF_NAME, CONF_PLATFORM, CONF_UNIQUE_ID
+from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
-from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
+from pytest_homeassistant_custom_component.common import mock_registry
 
-# from .const import MOCK_CONFIG_DATA
+from custom_components.energyscore.const import (
+    CONF_ENERGY_ENTITY,
+    CONF_PRICE_ENTITY,
+    DOMAIN,
+)
 
-# config = MockConfigEntry(domain=DOMAIN, entry_id="test")
 
 async def test_config(hass):
     """Test EnergyScore config."""
     config = {
-    "sensor": {
-        "platform": "energyscore",
-        CONF_NAME: "My Mock ES",
-        CONF_ENERGY_ENTITY: "sensor.energy",
-        CONF_PRICE_ENTITY: "sensor.electricity_price",
-        CONF_UNIQUE_ID: "CA0C3E3-38D3-4A79-91CC-129121AA3828",
+        "sensor": {
+            CONF_PLATFORM: DOMAIN,
+            CONF_NAME: "My Mock ES",
+            CONF_ENERGY_ENTITY: "sensor.energy",
+            CONF_PRICE_ENTITY: "sensor.electricity_price",
+            CONF_UNIQUE_ID: "CA0C3E3-38D3-4A79-91CC-129121AA3828",
         }
     }
-    
+
+    # Setting up a registry entry to pass a (nordpool) electricity_price sensor to the EnergyScore sensor.
+    mock_registry(
+        hass,
+        {
+            "sensor.electricity_price": er.RegistryEntry(
+                entity_id="sensor.electricity_price",
+                unique_id="1234",
+                platform="nordpool",
+                name="Hello World",
+            ),
+        },
+    )
+
+    # registry = er.async_get(hass)
+    # assert registry.async_get("sensor.electricity_price").platform == "nordpool"
+
     assert await async_setup_component(hass, "sensor", config)
     # Can not change "sensor" with "energyscore" over here for some reason. That also means
     # I cannot assert "energyscore" in hass.config.components.
 
     await hass.async_block_till_done()
-    assert 'sensor.energyscore' in hass.config.components

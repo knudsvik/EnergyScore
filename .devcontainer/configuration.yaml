@@ -33,15 +33,15 @@ sensor:
   - platform: energyscore
     name: My first energy score
     energy_entity: sensor.total_energy_consumption
-    price_entity: sensor.electricity_price
+    price_entity: sensor.nordpool_price
     unique_id: fknmekfefldmf
   - platform: energyscore
     name: Dishwasher Energy Score
     energy_entity: sensor.dishwasher_energy
-    price_entity: sensor.electricity_price
+    price_entity: sensor.nordpool_price
     unique_id: fknmekfefldmffdefdfd
   - platform: energyscore
     name: Washer Energy Score
     energy_entity: sensor.washer_energy
-    price_entity: sensor.electricity_price
+    price_entity: sensor.nordpool_price
     unique_id: fknmekfefldmfsdfsdfsdgdsg
