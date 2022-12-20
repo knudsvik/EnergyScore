@@ -65,7 +65,7 @@ async def async_setup_platform(
 
 def normalise_price(price_dict) -> dict:
     """Normalises price dict"""
-    if input == {}:
+    if price_dict == {}:
         return {}
     max_value = max(price_dict.values())
     return {key: value / max_value for key, value in price_dict.items()}
@@ -73,7 +73,7 @@ def normalise_price(price_dict) -> dict:
 
 def normalise_energy(energy_dict) -> dict:
     """Normalises energy dict to sum up to 1"""
-    if input == {}:
+    if energy_dict == {}:
         return {}
     sum_values = sum(energy_dict.values())
     return {key: value / sum_values for key, value in energy_dict.items()}
