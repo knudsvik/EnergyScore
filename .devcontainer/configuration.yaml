@@ -38,7 +38,7 @@ sensor:
   - platform: energyscore
     name: Dishwasher Energy Score
     energy_entity: sensor.dishwasher_energy
-    price_entity: sensor.nordpool_price
+    price_entity: sensor.electricity_price
     unique_id: fknmekfefldmffdefdfd
   - platform: energyscore
     name: Washer Energy Score
