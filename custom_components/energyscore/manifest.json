@@ -5,7 +5,7 @@
   "documentation": "https://github.com/knudsvik/energyscore",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/knudsvik/energyscore/issues",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "config_flow": false,
   "codeowners": [
     "@knudsvik"

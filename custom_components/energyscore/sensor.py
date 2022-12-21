@@ -68,7 +68,11 @@ def normalise_price(price_dict) -> dict:
     if price_dict == {}:
         return {}
     max_value = max(price_dict.values())
-    return {key: value / max_value for key, value in price_dict.items()}
+    min_value = min(price_dict.values())
+    return {
+        key: (max_value - value) / (max_value - min_value)
+        for key, value in price_dict.items()
+    }
 
 
 def normalise_energy(energy_dict) -> dict:
@@ -175,6 +179,18 @@ class EnergyScore(SensorEntity, RestoreEntity):
                 - self.attr[LAST_HOUR_ENERGY][now - timedelta(hours=1)]
             )
             self.attr[ENERGIES][now] = round(energy_used, 2)
+        elif (now - timedelta(hours=1)) in self.attr[ENERGIES] and (
+            now - timedelta(hours=2)
+        ) in self.attr[LAST_HOUR_ENERGY]:
+            self.attr[LAST_HOUR_ENERGY] = {
+                now
+                - timedelta(hours=1): self.attr[ENERGIES][now - timedelta(hours=1)]
+                + self.attr[LAST_HOUR_ENERGY][now - timedelta(hours=2)]
+            }
+            energy_used = (
+                self._energy.state
+                - self.attr[LAST_HOUR_ENERGY][now - timedelta(hours=1)]
+            )
         else:
             self.attr[LAST_HOUR_ENERGY] = {now: self._energy.state}
             energy_used = False
