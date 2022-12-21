@@ -3,6 +3,7 @@
 [![hacs_badge]](https://github.com/hacs/integration)
 ![analytics_badge]
 [![GitHub Activity][commits-shield]][commits]
+[![codecov_badge]](https://codecov.io/gh/knudsvik/EnergyScore)
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
@@ -84,4 +85,4 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [hacs_badge]: https://img.shields.io/badge/HACS-Default-41BDF5.svg
 [license-shield]: https://img.shields.io/github/license/knudsvik/energyscore
 [analytics_badge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.energyscore.total
-
+[codecov_badge]: https://codecov.io/gh/knudsvik/EnergyScore/branch/master/graph/badge.svg?token=9MFR3PDZ8D
