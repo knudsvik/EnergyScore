@@ -15,13 +15,13 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
 
 ## Installation
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=knudsvik&repository=energyscore&category=integration)
+
 ### Part 1 (HACS - preferred)
 
-1. Open HACS, click on Integrations, then the three dots in upper right corner and choose Custom repositories.
-2. Copy the URL from this GitHub repository and paste it into the Repository section
-3. Choose Integration as the Category
-4. Find the newly added integration EnergyScore, open it and and click Download in the bottom and then follow instructions
-5. Restart Home Assistant
+1. Click on the My link above *OR* open HACS, click on Integrations, then Explore and Download repositories and search for EnergyScore
+2. click Download in the bottom and then follow instructions
+3. Restart Home Assistant
 
 ### Part 1 (Manual alternative)
 
@@ -81,6 +81,7 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=flat
 [commits-shield]: https://img.shields.io/github/commit-activity/y/knudsvik/energyscore
 [commits]: https://github.com/knudsvik/energyscore/commits/master
-[hacs_badge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg
+[hacs_badge]: https://img.shields.io/badge/HACS-Default-41BDF5.svg
 [license-shield]: https://img.shields.io/github/license/knudsvik/energyscore
 [analytics_badge]: https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.energyscore.total
+
