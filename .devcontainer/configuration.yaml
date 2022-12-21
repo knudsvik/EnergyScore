@@ -12,7 +12,7 @@ logger:
 
 mqtt:
   sensor:
-    - state_topic: "ha-dev/sensor/electricity_price/state"
+    - state_topic: "ha-dev/sensor/nordpool_price/state"
       name: electricity_price
       unique_id: 001
       unit_of_measurement: "NOK/kWh"
@@ -33,7 +33,7 @@ sensor:
   - platform: energyscore
     name: My first energy score
     energy_entity: sensor.total_energy_consumption
-    price_entity: sensor.electricity_price
+    price_entity: sensor.nordpool_price
     unique_id: fknmekfefldmf
   - platform: energyscore
     name: Dishwasher Energy Score
@@ -43,5 +43,5 @@ sensor:
   - platform: energyscore
     name: Washer Energy Score
     energy_entity: sensor.washer_energy
-    price_entity: sensor.electricity_price
+    price_entity: sensor.nordpool_price
     unique_id: fknmekfefldmfsdfsdfsdgdsg

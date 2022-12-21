@@ -40,7 +40,7 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
       - platform: energyscore
         name: Heater Energy Score
         unique_id: AC816DB0-868A-431C-92AE-CBD46A864DC5
-        price_entity: sensor.electricity_price
+        price_entity: sensor.nordpool_electricity_price
         energy_entity: sensor.heater_energy
     ```
 2. Customise the configuration with your own entities and unique_id's
@@ -55,7 +55,7 @@ Name for the platform entity which must be unique within the platform.
 An ID that uniquely identifies this sensor. If two sensors have the same unique ID, Home Assistant will raise an exception.
 
 **price_entity** *string* REQUIRED <br>
-The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
+The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations. It is a clear advantage and recommendation to use the Nordpool sensor from the [nordpool custom component](https://github.com/custom-components/nordpool) as it will make the EnergyScore far more accurate throughout the day since it has price data on future hours.
 
 **energy_entity** *string* REQUIRED <br>
 The entity_id of an entity which provides the total increasing energy use as the state, e.g. from Tibber or PowerCalc integrations or a state from a device.
