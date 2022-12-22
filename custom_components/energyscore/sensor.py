@@ -95,7 +95,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._energy = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._name = config[CONF_NAME]
-        self._nordpool = False
+        self._nordpool = None
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
         self._price = None
@@ -111,9 +111,19 @@ class EnergyScore(SensorEntity, RestoreEntity):
             LAST_UPDATED: None,
         }
 
-        entity_reg = er.async_get(hass)
-        if entity_reg.async_get(self._price_entity).platform == "nordpool":
-            self._nordpool = True
+        self.hass = hass
+
+    @property
+    def is_nordpool(self) -> Optional[bool]:
+        if self._nordpool is None:
+            entity_reg = er.async_get(self.hass)
+            price_entity = entity_reg.async_get(self._price_entity)
+            if price_entity:
+                self._nordpool = price_entity.platform == "nordpool"
+            else:
+                # see https://github.com/knudsvik/EnergyScore/pull/52
+                _LOGGER.debug("Price entity is not defined, probably a misconfiguration or entity has no `unique_id`")
+        return self._nordpool
 
     @property
     def name(self) -> str:
@@ -197,7 +207,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
         # Process price data
         if (
-            self._nordpool
+            self.is_nordpool
             and self._price.attributes[NP_ATTR_RAW][0][NP_ATTR_START].date()
             == now.date()
         ):
