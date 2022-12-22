@@ -31,10 +31,10 @@ mqtt:
 
 sensor:
   - platform: energyscore
-    name: My first energy score
+    name: My second energy score
     energy_entity: sensor.total_energy_consumption
     price_entity: sensor.nordpool_price
-    unique_id: fknmekfefldmf
+    unique_id: fknfkkkf
   - platform: energyscore
     name: Dishwasher Energy Score
     energy_entity: sensor.dishwasher_energy
