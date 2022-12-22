@@ -9,7 +9,7 @@ from custom_components.energyscore.const import (
     DOMAIN,
 )
 from custom_components.energyscore.sensor import normalise_price, normalise_energy
-from .const import PRICE_DICT, ENERGY_DICT, EMPTY_DICT
+from .const import PRICE_DICT, ENERGY_DICT, EMPTY_DICT, SAME_PRICE_DICT
 
 
 async def test_config(hass):
@@ -51,5 +51,6 @@ def test_normalisation():
     """Test the normalisation function"""
     assert normalise_price(PRICE_DICT[0]) == PRICE_DICT[1]
     assert normalise_price(EMPTY_DICT[0]) == EMPTY_DICT[1]
+    assert normalise_price(SAME_PRICE_DICT[0]) == SAME_PRICE_DICT[1]
     assert normalise_energy(ENERGY_DICT[0]) == ENERGY_DICT[1]
     assert normalise_energy(EMPTY_DICT[0]) == EMPTY_DICT[1]
