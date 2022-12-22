@@ -110,7 +110,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
             PRICES: {},
             LAST_UPDATED: None,
         }
-        # self.entity_id = f"sensor.{self._name}".replace(" ", "_").lower()
 
         entity_reg = er.async_get(hass)
         if entity_reg.async_get(self._price_entity).platform == "nordpool":
