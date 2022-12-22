@@ -1,50 +1,32 @@
-from homeassistant.const import CONF_NAME, CONF_PLATFORM, CONF_UNIQUE_ID
+from homeassistant.components import sensor
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from homeassistant.setup import async_setup_component
-from pytest_homeassistant_custom_component.common import mock_registry
+from .const import VALID_CONFIG
 
-from custom_components.energyscore.const import (
-    CONF_ENERGY_ENTITY,
-    CONF_PRICE_ENTITY,
-    DOMAIN,
-)
-from custom_components.energyscore.sensor import normalise_price, normalise_energy
-from .const import PRICE_DICT, ENERGY_DICT, EMPTY_DICT
+from custom_components.energyscore.sensor import normalise_energy, normalise_price
+
+from .common import create_energyscore_sensor
+from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT
 
 
-async def test_config(hass):
-    """Test EnergyScore config."""
-    config = {
-        "sensor": {
-            CONF_PLATFORM: DOMAIN,
-            CONF_NAME: "My Mock ES",
-            CONF_ENERGY_ENTITY: "sensor.energy",
-            CONF_PRICE_ENTITY: "sensor.electricity_price",
-            CONF_UNIQUE_ID: "CA0C3E3-38D3-4A79-91CC-129121AA3828",
-        }
-    }
+async def test_new_config(hass: HomeAssistant):
+    """Testing a default setup of an energyscore sensor"""
+    await create_energyscore_sensor(hass)
 
-    # Setting up a registry entry to pass a (nordpool) electricity_price sensor to the EnergyScore sensor.
-    mock_registry(
-        hass,
-        {
-            "sensor.electricity_price": er.RegistryEntry(
-                entity_id="sensor.electricity_price",
-                unique_id="1234",
-                platform="nordpool",
-                name="Hello World",
-            ),
-        },
-    )
-
-    # registry = er.async_get(hass)
-    # assert registry.async_get("sensor.electricity_price").platform == "nordpool"
-
-    assert await async_setup_component(hass, "sensor", config)
-    # Can not change "sensor" with "energyscore" over here for some reason. That also means
-    # I cannot assert "energyscore" in hass.config.components.
-
-    await hass.async_block_till_done()
+    state = hass.states.get("sensor.my_mock_es")
+    assert state.state == "100"
+    assert state.attributes.get("unit_of_measurement") == "%"
+    assert state.attributes.get("state_class") == sensor.SensorStateClass.MEASUREMENT
+    assert state.attributes.get("energy_entity") == VALID_CONFIG["energy_entity"]
+    assert state.attributes.get("price_entity") == VALID_CONFIG["price_entity"]
+    assert state.attributes.get("quality") == 0
+    assert state.attributes.get("last_hour_energy") == {}
+    assert state.attributes.get("energy") == {}
+    assert state.attributes.get("price") == {}
+    assert state.attributes.get("last_updated") == None
+    assert state.attributes.get("unit_of_measurement") == "%"
+    assert state.attributes.get("icon") == "mdi:speedometer"
+    assert state.attributes.get("friendly_name") == "My Mock ES"
 
 
 def test_normalisation():
