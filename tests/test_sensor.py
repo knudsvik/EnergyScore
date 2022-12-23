@@ -5,7 +5,7 @@ from .const import VALID_CONFIG
 from custom_components.energyscore.sensor import normalise_energy, normalise_price
 
 from .common import create_energyscore_sensor
-from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT
+from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT, SAME_PRICE_DICT
 
 
 async def test_new_config(hass: HomeAssistant):
@@ -26,6 +26,7 @@ async def test_new_config(hass: HomeAssistant):
     assert state.attributes.get("unit_of_measurement") == "%"
     assert state.attributes.get("icon") == "mdi:speedometer"
     assert state.attributes.get("friendly_name") == "My Mock ES"
+
 
 def test_normalisation():
     """Test the normalisation function"""
