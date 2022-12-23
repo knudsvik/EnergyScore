@@ -69,6 +69,8 @@ def normalise_price(price_dict) -> dict:
         return {}
     max_value = max(price_dict.values())
     min_value = min(price_dict.values())
+    if max_value == min_value:
+        return {key: 1 for key, value in price_dict.items()}
     return {
         key: (max_value - value) / (max_value - min_value)
         for key, value in price_dict.items()

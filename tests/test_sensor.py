@@ -1,6 +1,5 @@
 from homeassistant.components import sensor
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
 from .const import VALID_CONFIG
 
 from custom_components.energyscore.sensor import normalise_energy, normalise_price
@@ -28,10 +27,10 @@ async def test_new_config(hass: HomeAssistant):
     assert state.attributes.get("icon") == "mdi:speedometer"
     assert state.attributes.get("friendly_name") == "My Mock ES"
 
-
 def test_normalisation():
     """Test the normalisation function"""
     assert normalise_price(PRICE_DICT[0]) == PRICE_DICT[1]
     assert normalise_price(EMPTY_DICT[0]) == EMPTY_DICT[1]
+    assert normalise_price(SAME_PRICE_DICT[0]) == SAME_PRICE_DICT[1]
     assert normalise_energy(ENERGY_DICT[0]) == ENERGY_DICT[1]
     assert normalise_energy(EMPTY_DICT[0]) == EMPTY_DICT[1]
