@@ -171,15 +171,10 @@ class EnergyScore(SensorEntity, RestoreEntity):
             minute=0, second=0, microsecond=0
         )  # TZ aware based on user settings
 
-        # Start by checking if it's a new day, and if so, reset the data
-        if (
-            self.attr[LAST_UPDATED] is not None
-            and self.attr[LAST_UPDATED].date() != now.date()
-        ):
-            self.attr[QUALITY] = 0
-            self.attr[PRICES] = {}
-            self.attr[ENERGIES] = {}
-            _LOGGER.debug("Daily data has been reset for %s", self._name)
+        # Start by removing data older than 24h
+        cutoff = now - timedelta(hours=24)
+        self.attr[PRICES] = { record_time: value for (record_time, value) in self.attr[PRICES].items() if record_time > cutoff }
+        self.attr[ENERGIES] = { record_time: value for (record_time, value) in self.attr[ENERGIES].items() if record_time > cutoff }
 
         # Process energy data
         if (now - timedelta(hours=1)) in self.attr[LAST_HOUR_ENERGY]:
