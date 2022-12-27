@@ -8,11 +8,11 @@
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 
-EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout a day. The EnergyScore will be 0% if you use all of your energy in the most expensive hour, 100% in the cheapest hour, but most likely somewhere in between depending on how well you are able to match your energy use with cheap prices. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
+EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout the last 24 hours. The EnergyScore will be 0% if you use all of your energy in the most expensive hour, 100% in the cheapest hour, but most likely somewhere in between depending on how well you are able to match your energy use with cheap prices. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
 
 <img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/energyScore_gauge.png" title="EnergyScore Gauge"/>
 
-You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler. Each sensor has a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of a day, the quality will be 0.75. The higher the quality is, the more you can trust the EnergyScore.
+You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler. Each sensor has a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of the last 24, the quality will be 0.75. The higher the quality is, the more you can trust the EnergyScore.
 
 ## Installation
 
@@ -56,7 +56,7 @@ Name for the platform entity which must be unique within the platform.
 An ID that uniquely identifies this sensor. If two sensors have the same unique ID, Home Assistant will raise an exception.
 
 **price_entity** *string* REQUIRED <br>
-The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations. It is a clear advantage and recommendation to use the Nordpool sensor from the [nordpool custom component](https://github.com/custom-components/nordpool) as it will make the EnergyScore far more accurate throughout the day since it has price data on future hours.
+The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 
 **energy_entity** *string* REQUIRED <br>
 The entity_id of an entity which provides the total increasing energy use as the state, e.g. from Tibber or PowerCalc integrations or a state from a device.
