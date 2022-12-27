@@ -191,13 +191,15 @@ class EnergyScore(SensorEntity, RestoreEntity):
                     value - self.attr[ENERGY][key - datetime.timedelta(hours=1)]
                 )
         _LOGGER.debug(
-            "%s - Calc. energy usage: %s", self._name, np.round(_energy_usage, 2)
+            "%s - Calc. energy usage: %s",
+            self._name,
+            [round(val, 2) for key, val in _energy_usage.items()],
         )
 
         # Normalise and intersect the data
         _norm_prices = normalise_price(self.attr[PRICES])
         _norm_energies = normalise_energy(_energy_usage)
-        _intersection = _norm_prices.keys() & _norm_energies.keys()
+        _intersection = self.attr[PRICES].keys() & _energy_usage.keys()
         _price_array = np.array([_norm_prices[x] for x in _intersection])
         _energy_array = np.array([_norm_energies[x] for x in _intersection])
         _LOGGER.debug("%s - Norm prices: %s", self._name, np.round(_price_array, 2))
