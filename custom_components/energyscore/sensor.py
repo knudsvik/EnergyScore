@@ -239,3 +239,13 @@ class EnergyScore(SensorEntity, RestoreEntity):
                 )
             else:
                 self.attr[LAST_UPDATED] = dt.now()
+
+                # For tests to work, json loader do not accept datetime objects as keys:
+                self.attr[PRICES] = {
+                    key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
+                    for key, val in self.attr[PRICES].items()
+                }
+                self.attr[ENERGY] = {
+                    key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
+                    for key, val in self.attr[ENERGY].items()
+                }
