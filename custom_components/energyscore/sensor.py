@@ -92,7 +92,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._energy = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._name = config[CONF_NAME]
-        self._nordpool = None
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
         self._price = None
@@ -132,20 +131,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
             last_state := await self.async_get_last_state()
         ) and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
             self._state = last_state.state
-
-            for attribute in [ENERGY, PRICES]:
+            for attribute in [ENERGY, PRICES, LAST_UPDATED, QUALITY]:
                 if attribute in last_state.attributes:
-                    att = last_state.attributes[attribute]
-                    self.attr[attribute] = {
-                        dt.parse_datetime(key): value for key, value in att.items()
-                    }
-            if LAST_UPDATED in last_state.attributes:
-                self.attr[LAST_UPDATED] = dt.parse_datetime(
-                    last_state.attributes[LAST_UPDATED]
-                )
-            if QUALITY in last_state.attributes:
-                self.attr[QUALITY] = last_state.attributes[QUALITY]
-
+                    self.attr[attribute] = last_state.attributes[attribute]
             _LOGGER.debug("Restored %s", self._name)
         else:
             _LOGGER.debug("Was not able to restore %s", self._name)
@@ -154,7 +142,15 @@ class EnergyScore(SensorEntity, RestoreEntity):
         """Processes the update data"""
         now = dt.now().replace(
             minute=0, second=0, microsecond=0
-        )  # TZ aware based on user settings
+        )  # TZ aware datetime obj based on user settings
+
+        # Parse datetimes from strings
+        for i in [ENERGY, PRICES]:
+            self.attr[i] = {
+                dt.parse_datetime(key): value
+                for key, value in self.attr[i].items()
+                if isinstance(key, str)
+            }
 
         # Add new data:
         self.attr[ENERGY][now] = self._energy.state
@@ -162,6 +158,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
         # Clean out old data:
         cutoff = now - timedelta(hours=self._rolling_hours)
+
         self.attr[PRICES] = {
             time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
         }
@@ -240,7 +237,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
             else:
                 self.attr[LAST_UPDATED] = dt.now()
 
-                # For tests to work, json loader do not accept datetime objects as keys:
+                # Datatimes needs to be converted to strings in state attributes
                 self.attr[PRICES] = {
                     key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
                     for key, val in self.attr[PRICES].items()
