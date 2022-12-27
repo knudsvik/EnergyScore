@@ -19,7 +19,6 @@ async def test_new_config(hass: HomeAssistant):
     assert state.attributes.get("energy_entity") == VALID_CONFIG["energy_entity"]
     assert state.attributes.get("price_entity") == VALID_CONFIG["price_entity"]
     assert state.attributes.get("quality") == 0
-    assert state.attributes.get("last_hour_energy") == {}
     assert state.attributes.get("energy") == {}
     assert state.attributes.get("price") == {}
     assert state.attributes.get("last_updated") == None
