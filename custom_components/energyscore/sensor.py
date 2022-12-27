@@ -17,7 +17,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
-import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, Optional
 from homeassistant.util import dt
@@ -27,13 +26,9 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
-    ENERGIES,
+    ENERGY,
     ICON,
     LAST_UPDATED,
-    LAST_HOUR_ENERGY,
-    NP_ATTR_RAW,
-    NP_ATTR_START,
-    NP_ATTR_VAL,
     PRICES,
     QUALITY,
 )
@@ -102,30 +97,18 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._norm_prices = np.array(None)
         self._price = None
         self._price_entity = config[CONF_PRICE_ENTITY]
+        self._rolling_hours = 24
         self._state = 100
         self.attr = {
             CONF_ENERGY_ENTITY: self._energy_entity,
             CONF_PRICE_ENTITY: self._price_entity,
             QUALITY: 0,
-            ENERGIES: {},
-            LAST_HOUR_ENERGY: {},
+            ENERGY: {},
             PRICES: {},
             LAST_UPDATED: None,
         }
 
         self.hass = hass
-
-    @property
-    def is_nordpool(self) -> Optional[bool]:
-        if self._nordpool is None:
-            entity_reg = er.async_get(self.hass)
-            price_entity = entity_reg.async_get(self._price_entity)
-            if price_entity:
-                self._nordpool = price_entity.platform == "nordpool"
-            else:
-                # see https://github.com/knudsvik/EnergyScore/pull/52
-                _LOGGER.debug("Price entity is not defined, probably a misconfiguration or entity has no `unique_id`")
-        return self._nordpool
 
     @property
     def name(self) -> str:
@@ -150,7 +133,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         ) and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE):
             self._state = last_state.state
 
-            for attribute in [ENERGIES, LAST_HOUR_ENERGY, PRICES]:
+            for attribute in [ENERGY, PRICES]:
                 if attribute in last_state.attributes:
                     att = last_state.attributes[attribute]
                     self.attr[attribute] = {
@@ -173,74 +156,50 @@ class EnergyScore(SensorEntity, RestoreEntity):
             minute=0, second=0, microsecond=0
         )  # TZ aware based on user settings
 
-        # Start by checking if it's a new day, and if so, reset the data
-        if (
-            self.attr[LAST_UPDATED] is not None
-            and self.attr[LAST_UPDATED].date() != now.date()
-        ):
-            self.attr[QUALITY] = 0
-            self.attr[PRICES] = {}
-            self.attr[ENERGIES] = {}
-            _LOGGER.debug("Daily data has been reset for %s", self._name)
+        # Add new data:
+        self.attr[ENERGY][now] = self._energy.state
+        self.attr[PRICES][now] = self._price.state
 
-        # Process energy data
-        if (now - timedelta(hours=1)) in self.attr[LAST_HOUR_ENERGY]:
-            energy_used = (
-                self._energy.state
-                - self.attr[LAST_HOUR_ENERGY][now - timedelta(hours=1)]
-            )
-            self.attr[ENERGIES][now] = round(energy_used, 2)
-        elif (now - timedelta(hours=1)) in self.attr[ENERGIES] and (
-            now - timedelta(hours=2)
-        ) in self.attr[LAST_HOUR_ENERGY]:
-            self.attr[LAST_HOUR_ENERGY] = {
-                now
-                - timedelta(hours=1): self.attr[ENERGIES][now - timedelta(hours=1)]
-                + self.attr[LAST_HOUR_ENERGY][now - timedelta(hours=2)]
-            }
-            energy_used = (
-                self._energy.state
-                - self.attr[LAST_HOUR_ENERGY][now - timedelta(hours=1)]
-            )
-        else:
-            self.attr[LAST_HOUR_ENERGY] = {now: self._energy.state}
-            energy_used = False
-            _LOGGER.debug("Need more energy data to update %s", self._name)
+        # Clean out old data:
+        cutoff = now - timedelta(hours=self._rolling_hours)
+        self.attr[PRICES] = {
+            time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
+        }
+        self.attr[ENERGY] = {
+            time: value for (time, value) in self.attr[ENERGY].items() if time > cutoff
+        }
 
-        # Process price data
-        if (
-            self.is_nordpool
-            and self._price.attributes[NP_ATTR_RAW][0][NP_ATTR_START].date()
-            == now.date()
-        ):
-            self.attr[PRICES] = {
-                hour[NP_ATTR_START]: hour[NP_ATTR_VAL]
-                for hour in self._price.attributes[NP_ATTR_RAW]
-            }
-        else:
-            self.attr[PRICES][now] = self._price.state
-
-        # Calculate quality
-        if len(self.attr[PRICES]) > int(now.hour) + 1:
-            q = len(self.attr[ENERGIES]) / (int(now.hour) + 1)
-        else:
-            q = min(len(self.attr[PRICES]), len(self.attr[ENERGIES])) / (
-                int(now.hour) + 1
-            )
+        # Calculate quality and break out if applicable
+        q = min(len(self.attr[PRICES]), len(self.attr[ENERGY])) / self._rolling_hours
         self.attr[QUALITY] = round(q, 2)
         _LOGGER.debug("%s - Quality: %s", self._name, self.attr[QUALITY])
-
-        # Break out if not enough quality data to continue
-        if self.attr[QUALITY] == 0 or sum(self.attr[ENERGIES].values()) == 0:
+        if self.attr[QUALITY] == 0 or len(set(self.attr[ENERGY].values())) == 1:
+            _LOGGER.debug(
+                "%s - No energy use in the last %s hours",
+                self._name,
+                self._rolling_hours,
+            )
+            # TODO: Check if it is actually possible to have quality = 0
+            # and if so, should the return really be 100?
             return 100
+
+        # Calculate energy data per hour from total:
+        _energy_usage = {}
+        for key, value in self.attr[ENERGY].items():
+            if key - datetime.timedelta(hours=1) in self.attr[ENERGY]:
+                _energy_usage[key] = (
+                    value - self.attr[ENERGY][key - datetime.timedelta(hours=1)]
+                )
+        _LOGGER.debug(
+            "%s - Calc. energy usage: %s", self._name, np.round(_energy_usage, 2)
+        )
 
         # Normalise and intersect the data
         _norm_prices = normalise_price(self.attr[PRICES])
-        _norm_energies = normalise_energy(self.attr[ENERGIES])
+        _norm_energies = normalise_energy(_energy_usage)
         _intersection = _norm_prices.keys() & _norm_energies.keys()
         _price_array = np.array([_norm_prices[x] for x in _intersection])
         _energy_array = np.array([_norm_energies[x] for x in _intersection])
-
         _LOGGER.debug("%s - Norm prices: %s", self._name, np.round(_price_array, 2))
         _LOGGER.debug("%s - Norm energy: %s", self._name, np.round(_energy_array, 2))
 
