@@ -14,20 +14,20 @@ from custom_components.energyscore.sensor import (
     normalise_price,
 )
 
-from .common import create_energyscore_sensor
 from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT, SAME_PRICE_DICT, VALID_CONFIG
 
 
 async def test_new_config(hass: HomeAssistant):
     """Testing a default setup of an energyscore sensor"""
-    await create_energyscore_sensor(hass)
+    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+    await hass.async_block_till_done()
 
     state = hass.states.get("sensor.my_mock_es")
     assert state.state == "100"
     assert state.attributes.get("unit_of_measurement") == "%"
     assert state.attributes.get("state_class") == sensor.SensorStateClass.MEASUREMENT
-    assert state.attributes.get("energy_entity") == VALID_CONFIG["energy_entity"]
-    assert state.attributes.get("price_entity") == VALID_CONFIG["price_entity"]
+    assert state.attributes.get("energy_entity") == "sensor.energy"
+    assert state.attributes.get("price_entity") == "sensor.electricity_price"
     assert state.attributes.get("quality") == 0
     assert state.attributes.get("total_energy") == {}
     assert state.attributes.get("price") == {}
@@ -47,18 +47,9 @@ def test_normalisation():
 
 
 async def test_update_sensor(hass: HomeAssistant) -> None:
-    """Test based on the min max sensor"""
+    """Test the update of energyscore by moving time"""
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
-    config = {
-        "sensor": {
-            "platform": "energyscore",
-            "name": "My Mock ES",
-            "energy_entity": "sensor.energy",
-            "price_entity": "sensor.electricity_price",
-            "unique_id": "CA0C3E3-38D3-4A79-91CC-1291dwAA3828",
-        }
-    }
 
     STATES = [100, 100, 42]
     QUALITIES = [0.04, 0.08, 0.12]
@@ -66,7 +57,7 @@ async def test_update_sensor(hass: HomeAssistant) -> None:
     PRICE = [0.99, 0.78, 1.54]
 
     with freeze_time(initial_datetime) as frozen_datetime:
-        assert await async_setup_component(hass, "sensor", config)
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
 
         for hour in range(0, 3):
@@ -90,3 +81,9 @@ async def test_update_sensor(hass: HomeAssistant) -> None:
         state = hass.states.get("sensor.my_mock_es")
         assert "2022-09-18T13:00:00-0700" not in state.attributes.get("total_energy")
         assert "2022-09-18T13:00:00-0700" not in state.attributes.get("price")
+
+
+async def test_unavailable_sources(hass: HomeAssistant):
+    """Testing unavailable price or energy sensors"""
+    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+    await hass.async_block_till_done()

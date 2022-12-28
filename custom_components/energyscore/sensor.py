@@ -213,15 +213,18 @@ class EnergyScore(SensorEntity, RestoreEntity):
             self._price = self.hass.states.get(self._price_entity)
             self._energy = self.hass.states.get(self._energy_entity)
 
-            if self._price.state in (
-                STATE_UNAVAILABLE,
-                STATE_UNKNOWN,
-            ) or self._energy.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-                _LOGGER.info("%s - Price and/or energy data is unavailable", self._name)
+            NONE_STATES = [STATE_UNAVAILABLE, STATE_UNKNOWN]
+            if self._price.state in NONE_STATES:
+                self._price = False
+                _LOGGER.info("%s - Price data is unavailable", self._name)
+            if self._energy.state in NONE_STATES:
+                self._energy = False
+                _LOGGER.info("%s - Energy data is unavailable", self._name)
+            if not self._price or not self._energy:
                 return
-            else:
-                self._price.state = round(float(self._price.state), 2)
-                self._energy.state = round(float(self._energy.state), 2)
+
+            self._price.state = round(float(self._price.state), 2)
+            self._energy.state = round(float(self._energy.state), 2)
 
         except:
             _LOGGER.exception("%s - Could not fetch price and energy data", self._name)
