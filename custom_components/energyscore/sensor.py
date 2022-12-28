@@ -215,11 +215,11 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
             NONE_STATES = [STATE_UNAVAILABLE, STATE_UNKNOWN]
             if self._price.state in NONE_STATES:
+                _LOGGER.info("%s - Price data is %s", self._name, self._price.state)
                 self._price = False
-                _LOGGER.info("%s - Price data is unavailable", self._name)
             if self._energy.state in NONE_STATES:
+                _LOGGER.info("%s - Energy data is %s", self._name, self._energy.state)
                 self._energy = False
-                _LOGGER.info("%s - Energy data is unavailable", self._name)
             if not self._price or not self._energy:
                 return
 
