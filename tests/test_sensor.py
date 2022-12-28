@@ -2,7 +2,13 @@ import datetime
 
 from freezegun import freeze_time
 from homeassistant.components import sensor
-from homeassistant.core import HomeAssistant
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.core import HomeAssistant, State
+from homeassistant.helpers.restore_state import (
+    DATA_RESTORE_STATE_TASK,
+    RestoreStateData,
+    StoredState,
+)
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
@@ -13,8 +19,6 @@ from custom_components.energyscore.sensor import (
     normalise_energy,
     normalise_price,
 )
-
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 
 from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT, SAME_PRICE_DICT, VALID_CONFIG
 
@@ -139,3 +143,52 @@ async def test_non_numeric_source_state(hass: HomeAssistant, caplog) -> None:
     async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
     await hass.async_block_till_done()
     assert "My Mock ES - Possibly non-numeric source state" in caplog.text
+
+
+async def test_restore(hass: HomeAssistant, caplog) -> None:
+    """Testing restoring sensor state and attributes
+    Inspired by code in core/tests/helpers/test_restore_state.py
+    """
+    stored_state = StoredState(
+        State(
+            "sensor.my_mock_es",
+            38,
+            attributes={
+                "energy_entity": "sensor.restored_energy",
+                "price_entity": "sensor.restored_price",
+                "quality": 0.12,
+                "total_energy": {"2022-09-18T13:00:00-0700": 122.39},
+                "price": {"2022-09-18T13:00:00-0700": 0.99},
+                "icon": "mdi:home-assistant",
+                "friendly_name": "New fancy name",
+                "last_updated": "2020-12-01T20:50:53.131803+01:00",
+            },
+        ),
+        None,
+        dt.now(),
+    )
+
+    data = await RestoreStateData.async_get_instance(hass)
+    await hass.async_block_till_done()
+    await data.store.async_save([stored_state.as_dict()])
+
+    # Emulate a fresh load
+    hass.data.pop(DATA_RESTORE_STATE_TASK)
+
+    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+    await hass.async_block_till_done()
+    assert "Restored My Mock ES" in caplog.text
+
+    # Assert restored data
+    state = hass.states.get("sensor.my_mock_es")
+    assert state.state == "38"
+    assert state.attributes.get("quality") == 0.12
+    assert state.attributes.get("total_energy") == {"2022-09-18T13:00:00-0700": 122.39}
+    assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
+    assert state.attributes.get("last_updated") == "2020-12-01T20:50:53.131803+01:00"
+
+    # Following attributes are saved, but not restored, so should still be the default
+    assert state.attributes.get("energy_entity") == "sensor.energy"
+    assert state.attributes.get("price_entity") == "sensor.electricity_price"
+    assert state.attributes.get("friendly_name") == "My Mock ES"
+    assert state.attributes.get("icon") == "mdi:speedometer"
