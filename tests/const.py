@@ -13,9 +13,11 @@ ENERGY_DICT = [
 EMPTY_DICT = [{}, {}]
 
 VALID_CONFIG = {
-    "platform": "energyscore",
-    "name": "My Mock ES",
-    "energy_entity": "sensor.energy",
-    "price_entity": "sensor.electricity_price",
-    "unique_id": "CA0C3E3-38D3-4A79-91CC-129121AA3828",
-}
+        "sensor": {
+            "platform": "energyscore",
+            "name": "My Mock ES",
+            "energy_entity": "sensor.energy",
+            "price_entity": "sensor.electricity_price",
+            "unique_id": "CA0C3E3-38D3-4A79-91CC-1291dwAA3828",
+        }
+    }

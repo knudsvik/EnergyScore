@@ -18,7 +18,6 @@ This will install `homeassistant`, `pytest`, and `pytest-homeassistant-custom-co
 Command | Description
 ------- | -----------
 `pytest tests/` | This will run all tests in `tests/` and tell you how many passed/failed. Run with the `-s` attribute to print Home Assistant log.
-`pytest --durations=10 --cov-report term-missing --cov=custom_components.energyscore tests` | This tells `pytest` that your target module to test is `custom_components.energyscore` so that it can give you a [code coverage](https://en.wikipedia.org/wiki/Code_coverage) summary, including % of code that was executed and the line numbers of missed executions.
 
 
 # References
