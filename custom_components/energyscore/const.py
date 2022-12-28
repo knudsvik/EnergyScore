@@ -10,13 +10,7 @@ CONF_PRICE_ENTITY = "price_entity"
 CONF_ENERGY_ENTITY = "energy_entity"
 
 # Other
-ENERGIES = "energy"
+ENERGY = "total_energy"
 LAST_UPDATED = "last_updated"
 PRICES = "price"
 QUALITY = "quality"
-LAST_HOUR_ENERGY = "last_hour_energy"
-
-# Nordpool
-NP_ATTR_RAW = "raw_today"
-NP_ATTR_START = "start"
-NP_ATTR_VAL = "value"
