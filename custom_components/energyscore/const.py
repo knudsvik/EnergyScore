@@ -10,7 +10,7 @@ CONF_PRICE_ENTITY = "price_entity"
 CONF_ENERGY_ENTITY = "energy_entity"
 
 # Other
-ENERGY = "energy"
+ENERGY = "total_energy"
 LAST_UPDATED = "last_updated"
 PRICES = "price"
 QUALITY = "quality"

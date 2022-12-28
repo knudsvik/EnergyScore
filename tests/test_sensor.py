@@ -25,7 +25,7 @@ async def test_new_config(hass: HomeAssistant):
     assert state.attributes.get("energy_entity") == VALID_CONFIG["energy_entity"]
     assert state.attributes.get("price_entity") == VALID_CONFIG["price_entity"]
     assert state.attributes.get("quality") == 0
-    assert state.attributes.get("energy") == {}
+    assert state.attributes.get("total_energy") == {}
     assert state.attributes.get("price") == {}
     assert state.attributes.get("last_updated") is None
     assert state.attributes.get("unit_of_measurement") == "%"
@@ -76,12 +76,14 @@ async def test_update_sensor(hass: HomeAssistant) -> None:
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         # Check that old data is purged:
-        assert "2022-09-18T13:00:00-0700" in state.attributes.get("energy")
+        assert "2022-09-18T13:00:00-0700" in state.attributes.get("total_energy")
+        assert "2022-09-18T13:00:00-0700" in state.attributes.get("price")
         frozen_datetime.tick(delta=datetime.timedelta(hours=21))
         hass.states.async_set("sensor.energy", 178.3)
         hass.states.async_set("sensor.electricity_price", 1.32)
         async_fire_time_changed(hass, dt.now() + datetime.timedelta(minutes=10))
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert "2022-09-18T13:00:00-0700" not in state.attributes.get("energy")
+        assert "2022-09-18T13:00:00-0700" not in state.attributes.get("total_energy")
+        assert "2022-09-18T13:00:00-0700" not in state.attributes.get("price")
         print("----- s t a t e", state)
