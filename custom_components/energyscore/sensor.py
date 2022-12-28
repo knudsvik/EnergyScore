@@ -1,6 +1,5 @@
 """Sensor platform for energyscore."""
 import datetime
-from datetime import timedelta
 import logging
 from typing import Any, Callable
 
@@ -36,7 +35,7 @@ from .const import (
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 # Time between updating data
-SCAN_INTERVAL = timedelta(minutes=10)
+SCAN_INTERVAL = datetime.timedelta(minutes=10)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -157,7 +156,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self.attr[PRICES][now] = self._price.state
 
         # Clean out old data:
-        cutoff = now - timedelta(hours=self._rolling_hours)
+        cutoff = now - datetime.timedelta(hours=self._rolling_hours)
 
         self.attr[PRICES] = {
             time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
