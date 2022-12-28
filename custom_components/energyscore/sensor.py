@@ -225,12 +225,14 @@ class EnergyScore(SensorEntity, RestoreEntity):
             self._price.state = round(float(self._price.state), 2)
             self._energy.state = round(float(self._energy.state), 2)
 
-        except:
+        except ValueError:
+            _LOGGER.exception("%s - Possibly non-numeric source state", self._name)
+        except Exception:
             _LOGGER.exception("%s - Could not fetch price and energy data", self._name)
         else:
             try:
                 self._state = self.process_new_data()
-            except:
+            except Exception:
                 _LOGGER.exception(
                     "%s - Could not process the updated data and produce the new EnergyScore",
                     self._name,
