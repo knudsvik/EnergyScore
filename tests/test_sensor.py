@@ -14,6 +14,8 @@ from custom_components.energyscore.sensor import (
     normalise_price,
 )
 
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+
 from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT, SAME_PRICE_DICT, VALID_CONFIG
 
 
@@ -83,7 +85,34 @@ async def test_update_sensor(hass: HomeAssistant) -> None:
         assert "2022-09-18T13:00:00-0700" not in state.attributes.get("price")
 
 
-async def test_unavailable_sources(hass: HomeAssistant):
-    """Testing unavailable price or energy sensors"""
+async def test_unavailable_sources(hass: HomeAssistant, caplog):
+    """Testing unavailable or unknown price or energy sensors"""
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
+
+    for state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
+        hass.states.async_set("sensor.energy", 24321.4)
+        hass.states.async_set("sensor.electricity_price", state)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+        assert f"My Mock ES - Price data is {state}" in caplog.text
+
+        hass.states.async_set("sensor.energy", state)
+        hass.states.async_set("sensor.electricity_price", 0.42)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+        assert f"My Mock ES - Energy data is {state}" in caplog.text
+
+
+async def test_both_sources_unavailable(hass: HomeAssistant, caplog):
+    """Testing if both sources are unavailable or unknown (new caplog)"""
+    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+    await hass.async_block_till_done()
+
+    for state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
+        hass.states.async_set("sensor.energy", state)
+        hass.states.async_set("sensor.electricity_price", state)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+        assert f"My Mock ES - Energy data is {state}" in caplog.text
+        assert f"My Mock ES - Price data is {state}" in caplog.text
