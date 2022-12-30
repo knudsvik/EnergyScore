@@ -20,10 +20,12 @@ mqtt:
       name: total_energy_consumption
       unique_id: 002
       unit_of_measurement: "kWh"
+      state_class: total
     - state_topic: "ha-dev/sensor/dishwasher_energy/state"
       name: dishwasher_energy
       unique_id: 004
       unit_of_measurement: "kWh"
+      state_class: total
     - state_topic: "ha-dev/sensor/washer_energy/state"
       name: washer_energy
       unique_id: 005
