@@ -49,17 +49,13 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
 
 ### Configuration variables
 
-**name** *string* REQUIRED <br>
-Name for the platform entity which must be unique within the platform.
+Attribute | Data type | Type | Description
+--------- | --------- | ---- | -----------
+name | string | Required | Name for the platform entity which must be unique within the platform.
+unique_id | string | Required | An ID that uniquely identifies this sensor. If two sensors have the same unique ID, Home Assistant will raise an exception.
+price_entity | string | Required | The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
+energy_entity | string | Required | The entity_id of an entity which provides the total increasing energy use as the state, e.g. from Tibber or PowerCalc integrations or a state from a device. The energy entity can also be a total that resets at given intervals.
 
-**unique_id** *string* REQUIRED <br>
-An ID that uniquely identifies this sensor. If two sensors have the same unique ID, Home Assistant will raise an exception.
-
-**price_entity** *string* REQUIRED <br>
-The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
-
-**energy_entity** *string* REQUIRED <br>
-The entity_id of an entity which provides the total increasing energy use as the state, e.g. from Tibber or PowerCalc integrations or a state from a device.
 
 ### Debugging
 
@@ -71,6 +67,13 @@ logger:
     custom_components.energyscore: debug
 ```
 
+You can also start debugging with a service call:
+
+```yaml
+service: logger.set_level
+data:
+  custom_components.energyscore: debug
+```
 
 ## Contributions are welcome!
 

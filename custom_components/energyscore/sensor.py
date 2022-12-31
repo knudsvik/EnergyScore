@@ -142,6 +142,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         now = dt.now().replace(
             minute=0, second=0, microsecond=0
         )  # TZ aware datetime obj based on user settings
+        # TODO: create function for this (also used elsewhere)
 
         # Parse datetimes from strings
         for i in [ENERGY, PRICES]:
@@ -151,13 +152,8 @@ class EnergyScore(SensorEntity, RestoreEntity):
                 if isinstance(key, str)
             }
 
-        # Add new data:
-        self.attr[ENERGY][now] = self._energy.state
-        self.attr[PRICES][now] = self._price.state
-
         # Clean out old data:
         cutoff = now - datetime.timedelta(hours=self._rolling_hours)
-
         self.attr[PRICES] = {
             time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
         }
@@ -165,32 +161,76 @@ class EnergyScore(SensorEntity, RestoreEntity):
             time: value for (time, value) in self.attr[ENERGY].items() if time > cutoff
         }
 
+        # Add new data, need to check declining energy first
+        previous = now - datetime.timedelta(hours=1)
+        if (
+            previous in self.attr[ENERGY]
+            and self.attr[ENERGY][previous] is not None
+            and self._energy.state < self.attr[ENERGY][previous]
+        ):
+            _state_class = self._energy.attributes.get("state_class")
+            _last_reset = self._energy.attributes.get("last_reset")
+            if _last_reset is not None:
+                _last_reset = dt.parse_datetime(_last_reset).replace(
+                    minute=0, second=0, microsecond=0
+                )
+
+            # Check state classes:
+            if _state_class == "total_increasing" or (
+                _state_class == "total" and _last_reset is not None
+            ):
+                self.attr[ENERGY][now] = self._energy.state
+            else:
+                if _state_class == "total":
+                    _warn_text = """, but there is no last_reset attribute to confirm that the sensor is expected to decline the value."""
+                else:
+                    _warn_text = """. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."""
+                _LOGGER.warning(
+                    "%s - The energy entity's state class is %s%s",
+                    self._name,
+                    _state_class,
+                    _warn_text,
+                )
+                self.attr[ENERGY][now] = None
+        else:
+            self.attr[ENERGY][now] = self._energy.state
+        self.attr[PRICES][now] = self._price.state
+
+        # Calculate energy data per hour from total:
+        _energy_usage = {}
+        for key, value in self.attr[ENERGY].items():
+            previous = key - datetime.timedelta(hours=1)
+            if previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
+
+                # Check if the energy sensor is resetting
+                if self.attr[ENERGY][previous] is None or (
+                    value < self.attr[ENERGY][previous]
+                ):
+                    _energy_usage[key] = value
+                else:
+                    _energy_usage[key] = value - self.attr[ENERGY][previous]
+            elif previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
+                _energy_usage[key] = value
+
+        _LOGGER.debug(
+            "%s - Calc. energy usage: %s",
+            self._name,
+            [round(val, 2) for key, val in _energy_usage.items()],
+        )
+
         # Calculate quality and break out if applicable
-        q = min(len(self.attr[PRICES]), len(self.attr[ENERGY])) / self._rolling_hours
+        q = min(len(self.attr[PRICES]), len(_energy_usage)) / self._rolling_hours
         self.attr[QUALITY] = round(q, 2)
         _LOGGER.debug("%s - Quality: %s", self._name, self.attr[QUALITY])
         if self.attr[QUALITY] == 0 or len(set(self.attr[ENERGY].values())) == 1:
             _LOGGER.debug(
-                "%s - No energy use in the last %s hours",
+                "%s - Not able to calculate energy use in the last %s hours",
                 self._name,
                 self._rolling_hours,
             )
             # TODO: Check if it is actually possible to have quality = 0
             # and if so, should the return really be 100?
             return 100
-
-        # Calculate energy data per hour from total:
-        _energy_usage = {}
-        for key, value in self.attr[ENERGY].items():
-            if key - datetime.timedelta(hours=1) in self.attr[ENERGY]:
-                _energy_usage[key] = (
-                    value - self.attr[ENERGY][key - datetime.timedelta(hours=1)]
-                )
-        _LOGGER.debug(
-            "%s - Calc. energy usage: %s",
-            self._name,
-            [round(val, 2) for key, val in _energy_usage.items()],
-        )
 
         # Normalise and intersect the data
         _norm_prices = normalise_price(self.attr[PRICES])

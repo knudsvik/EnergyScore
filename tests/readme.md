@@ -17,7 +17,9 @@ This will install `homeassistant`, `pytest`, and `pytest-homeassistant-custom-co
 
 Command | Description
 ------- | -----------
-`pytest tests/` | This will run all tests in `tests/` and tell you how many passed/failed. Run with the `-s` attribute to print Home Assistant log.
+`pytest tests/` | This will run all tests in `tests/` and tell you how many passed/failed.
+`pytest tests/ -s` | This will run all tests in `tests/` and tell you how many passed/failed. The `-s` attribute prints the Home Assistant log.
+`pytest tests/ -s -k test_setup` | This will run all tests in `tests/` and tell you how many passed/failed. The `-s` attribute prints the Home Assistant log. The `-k` attrinute tells it to run only one specified test.
 
 
 # References
