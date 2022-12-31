@@ -191,6 +191,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
                     _state_class,
                     _warn_text,
                 )
+                self.attr[ENERGY][now] = None
         else:
             self.attr[ENERGY][now] = self._energy.state
         self.attr[PRICES][now] = self._price.state
@@ -202,7 +203,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
             if previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
 
                 # Check if the energy sensor is resetting
-                if self.attr[ENERGY][previous] is None:
+                if self.attr[ENERGY][previous] is None or (
+                    value < self.attr[ENERGY][previous]
+                ):
                     _energy_usage[key] = value
                 else:
                     _energy_usage[key] = value - self.attr[ENERGY][previous]
