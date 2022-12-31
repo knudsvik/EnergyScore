@@ -247,15 +247,16 @@ async def test_declining_energy_unsupported_state_classes(hass, caplog):
         hass.states.async_set("sensor.energy", 1.8)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
+        state = hass.states.get("sensor.my_mock_es")
+        assert state.state == "37"
         frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-        assert state.state == "71"
 
         hass.states.async_set("sensor.energy", 1.6)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "71"
-        assert state.attributes.get("quality") == 0.04
+        assert state.state == "37"
+        assert state.attributes.get("quality") == 0.08
         assert (
             "My Mock ES - The energy entity's state class is None. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
             in caplog.text
@@ -275,8 +276,8 @@ async def test_declining_energy_unsupported_state_classes(hass, caplog):
             if hour == 2:
                 break
         state = hass.states.get("sensor.my_mock_es")
-        assert state.attributes.get("quality") == 0.08
-        assert state.state == "60"
+        assert state.attributes.get("quality") == 0.17
+        assert state.state == "80"
         # Now with total state_class but no reset
         hass.states.async_set(
             "sensor.energy",
@@ -288,8 +289,8 @@ async def test_declining_energy_unsupported_state_classes(hass, caplog):
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "60"
-        assert state.attributes.get("quality") == 0.08
+        assert state.state == "80"
+        assert state.attributes.get("quality") == 0.17
         assert (
             "My Mock ES - The energy entity's state class is total, but there is no last_reset attribute to confirm that the sensor is expected to decline the value."
             in caplog.text
@@ -332,7 +333,7 @@ async def test_declining_energy_supported_state_classes(hass, caplog):
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "53"
+        assert state.state == "30"
         frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         # Case state_class: total and last_reset
@@ -347,4 +348,4 @@ async def test_declining_energy_supported_state_classes(hass, caplog):
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "53"
+        assert state.state == "33"
