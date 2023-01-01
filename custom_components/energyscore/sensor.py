@@ -15,6 +15,7 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, Optional
@@ -25,6 +26,7 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
+    DOMAIN,
     ENERGY,
     ICON,
     LAST_UPDATED,
@@ -47,13 +49,23 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities,
+):
+    """Setup sensors from a config entry created in the integrations UI"""
+    config = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
+
+
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities: Callable,
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
-    """Set up the sensors from YAML config"""
+    """Set up sensors from YAML config"""
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
@@ -80,7 +92,7 @@ def normalise_energy(energy_dict) -> dict:
 
 
 class EnergyScore(SensorEntity, RestoreEntity):
-    """EnergyScore Sensor class."""
+    """EnergyScore Sensor class"""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"

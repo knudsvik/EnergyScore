@@ -1,0 +1,16 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "price_entity": "Price entity",
+                    "energy_entity": "Energy entity",
+                    "name": "Llamo",
+                    "unique_id": "Unique ID"
+                },
+                "description": "description",
+                "title": "title"
+            },
+        }
+    }
+}
