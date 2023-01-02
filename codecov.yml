@@ -1,0 +1,7 @@
+# Codecov settings: https://docs.codecov.com/docs/common-recipe-list
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+comment: false
