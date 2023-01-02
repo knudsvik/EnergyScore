@@ -35,6 +35,7 @@ from .const import (
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+DOMAIN = "energyscore"
 
 # Time between updating data
 SCAN_INTERVAL = datetime.timedelta(minutes=10)
@@ -49,6 +50,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 
+_LOGGER.warning(" - - - - - - - - Sensor file is read")
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -56,6 +60,9 @@ async def async_setup_entry(
 ):
     """Setup sensors from a config entry created in the integrations UI"""
     config = hass.data[DOMAIN][config_entry.entry_id]
+    _LOGGER.warning(
+        " - - - - - - - - Config been created (will add entities): %s", config
+    )
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 

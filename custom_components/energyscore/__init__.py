@@ -8,18 +8,27 @@ Inspiration from
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
+import logging
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
+
 DOMAIN = "energyscore"  # burde kunne importere denne.. men står her: https://developers.home-assistant.io/docs/creating_component_index/
+
+_LOGGER.warning(" - - - - - - - - init file is read")
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up platform from a ConfigEntry."""
     hass.data.setdefault(DOMAIN, {})
+    _LOGGER.warning(" - - - - - - - - Default has been set")
     hass.data[DOMAIN][entry.entry_id] = entry.data
+    _LOGGER.warning(" - - - - - - - - Entry data: %s", entry.data)
 
     # Forward the setup to the sensor platform.
-    hass.async_create_task(
+    await hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
+    _LOGGER.warning(" - - - - - - - - Task has been created")
     return True
 
 
