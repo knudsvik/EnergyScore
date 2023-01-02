@@ -11,6 +11,9 @@
                 "description": "description",
                 "title": "title"
             },
+        },
+        "abort": {
+            "already_configured": "Entity is already configured"
         }
     }
 }

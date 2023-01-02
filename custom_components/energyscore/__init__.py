@@ -1,11 +1,14 @@
 """
 Custom integration to integrate EnergyScore with Home Assistant.
-Inspiration from Aaron Godfrey's custom component tutorial, part 3
+Inspiration from
+- Aaron Godfrey's custom component tutorial, part 3
+- https://developers.home-assistant.io/docs/config_entries_index/
 """
 
-from .const import DOMAIN
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+
+DOMAIN = "energyscore"  # burde kunne importere denne.. men står her: https://developers.home-assistant.io/docs/creating_component_index/
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -21,6 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 # TODO: Check what this next function does. Could this be the reason for not showing energyscore intergration name without unique_id in yaml?
+# Står om denne her: https://developers.home-assistant.io/docs/creating_component_index/
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the EnergyScore integration from yaml configuration."""
     hass.data.setdefault(DOMAIN, {})
