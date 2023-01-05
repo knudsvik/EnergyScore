@@ -4,13 +4,15 @@ Inspiration from Aaron Godfrey's custom component tutorial, part 3
 """
 
 
-from homeassistant import config_entries
-import voluptuous as vol
-from typing import Any
-from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, DOMAIN
-import homeassistant.helpers.config_validation as cv
-from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
 import logging
+from typing import Any
+
+from homeassistant import config_entries
+from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
+
+from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, DOMAIN
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
