@@ -33,7 +33,15 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
 5. Place the files you downloaded in the new directory (folder) you created.
 6. Restart Home Assistant
 
-### Part 2
+### Part 2 (UI - preferred)
+
+1. Open the integrations page
+2. Click on the + to add a new integration
+3. Search for and choose EnergyScore
+4. Choose a name and the sensors to use.
+It may take up to two hours to get enough data to calculate the EnergyScore.
+
+### Part 2 (YAML alternative)
 
 1. Add following to your `configuration.yaml`
     ```yaml
@@ -45,7 +53,8 @@ You can set up several EnergyScore sensors,e.g. one on your total energy usage, 
         energy_entity: sensor.heater_energy
     ```
 2. Customise the configuration with your own entities and unique_id's
-3. Restart Home Assistant. It may take up to two hours to get enough data to calculate the EnergyScore.
+3. Restart Home Assistant.
+It may take up to two hours to get enough data to calculate the EnergyScore.
 
 ### Configuration variables
 
