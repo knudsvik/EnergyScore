@@ -59,10 +59,10 @@ async def async_setup_entry(
     async_add_entities,
 ):
     """Setup sensors from a config entry created in the integrations UI"""
+
+    # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
-    _LOGGER.warning(
-        " - - - - - - - - Config been created (will add entities): %s", config
-    )
+
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 

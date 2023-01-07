@@ -5,11 +5,11 @@
                 "data": {
                     "price_entity": "Price entity",
                     "energy_entity": "Energy entity",
-                    "name": "Llamo",
-                    "unique_id": "Unique ID"
+                    "name": "Name of the EnergyScore sensor (temporary)",
+                    "unique_id": "Unique ID (temporary)"
                 },
-                "description": "description",
-                "title": "title"
+                "description": "EnergyScore is created from an energy and a price sensor. Please choose the relevant sensors:",
+                "title": "Choose source entities"
             }
         },
         "abort": {
