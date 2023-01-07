@@ -21,3 +21,10 @@ VALID_CONFIG = {
             "unique_id": "CA0C3E3-38D3-4A79-91CC-1291dwAA3828",
         }
     }
+
+VALID_UI_CONFIG = {
+    "name": "UI EnergyScore",
+    "energy_entity": "sensor.energy_ui",
+    "price_entity": "sensor.price_ui",
+    "unique_id": "09A8DC4C-7D93-448C-9501-F37AE9212263",
+}

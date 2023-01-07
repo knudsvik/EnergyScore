@@ -35,7 +35,7 @@ sensor:
   - platform: energyscore
     name: My second energy score
     energy_entity: sensor.total_energy_consumption
-    price_entity: sensor.nordpool_price
+    price_entity: sensor.electricity_price
     unique_id: fknfkkkf
   - platform: energyscore
     name: Dishwasher Energy Score
