@@ -1,3 +1,7 @@
+"""
+Sensor tests for EnergyScore
+"""
+
 import datetime
 
 from freezegun import freeze_time
