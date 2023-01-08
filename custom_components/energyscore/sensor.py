@@ -8,6 +8,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
     CONF_UNIQUE_ID,
@@ -15,7 +16,6 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, Optional
@@ -45,7 +45,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
-        vol.Required(CONF_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_UNIQUE_ID): cv.string,
     }
 )
 
@@ -59,7 +59,6 @@ async def async_setup_entry(
 
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
-
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
@@ -103,9 +102,10 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
     def __init__(self, hass, config):
         self._attr_icon: str = ICON
-        self._attr_unique_id = config[CONF_UNIQUE_ID]
+        self._attr_unique_id = config.get(CONF_UNIQUE_ID)
         self._energy = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
+        self.hass = hass  # TODO: needed?
         self._name = config[CONF_NAME]
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
@@ -121,8 +121,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
             PRICES: {},
             LAST_UPDATED: None,
         }
-
-        self.hass = hass
 
     @property
     def name(self) -> str:

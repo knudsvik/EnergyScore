@@ -13,7 +13,7 @@
             }
         },
         "abort": {
-            "already_configured": "Enheten er allerede konfigurert"
+            "already_configured": "Denne kombinasjonen av enheter er allerede konfigurert"
         }
     }
 }

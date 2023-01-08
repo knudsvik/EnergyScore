@@ -13,7 +13,7 @@
             }
         },
         "abort": {
-            "already_configured": "Entity is already configured"
+            "already_configured": "The entity combination is already configured"
         }
     }
 }
