@@ -5,8 +5,7 @@
                 "data": {
                     "price_entity": "Price entity",
                     "energy_entity": "Energy entity",
-                    "name": "Name of the EnergyScore sensor (temporary)",
-                    "unique_id": "Unique ID (temporary)"
+                    "name": "Name of the EnergyScore sensor"
                 },
                 "description": "EnergyScore is created from an energy and a price sensor. Please choose the relevant sensors:",
                 "title": "Choose source entities"

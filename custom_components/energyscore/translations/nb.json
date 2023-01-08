@@ -5,8 +5,7 @@
                 "data": {
                     "price_entity": "Prisenhet",
                     "energy_entity": "Energienhet",
-                    "name": "Navnet på EnergyScore sensoren (midlertidig)",
-                    "unique_id": "Unik ID (midlertidig))"
+                    "name": "Navnet på EnergyScore sensoren"
                 },
                 "description": "EnergyScore blir laget av en energi- og en prisenhet. Vennligst velg de relevante sensorene:",
                 "title": "Velg kildeenheter"
