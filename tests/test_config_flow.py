@@ -45,7 +45,12 @@ async def test_flow_creates_config_entry(hass):
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["title"] == "EnergyScore"
-    assert result["data"] == VALID_UI_CONFIG
+    assert result["data"] == {
+        "name": "UI EnergyScore",
+        "energy_entity": "sensor.energy_ui",
+        "price_entity": "sensor.price_ui",
+        "unique_id": "ES_energy_ui_price_ui",
+    }
 
     state = hass.states.get("sensor.ui_energyscore")
     assert state.state == "100"
