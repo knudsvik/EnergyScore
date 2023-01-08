@@ -23,8 +23,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-# TODO: Check what this next function does. Could this be the reason for not showing energyscore intergration name without unique_id in yaml?
-# Står om denne her: https://developers.home-assistant.io/docs/creating_component_index/
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the EnergyScore integration from yaml configuration."""
     hass.data.setdefault(DOMAIN, {})
