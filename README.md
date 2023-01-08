@@ -14,61 +14,59 @@ EnergyScore is a metric that scores how well you are utilizing changing energy p
 
 You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler. Each sensor has a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of the last 24, the quality will be 0.75. The higher the quality is, the more you can trust the EnergyScore.
 
+# Get started
+
 ## Installation
+
+Install EnergyScore via HACS by using the My Button below or alternatively search for it in HACS integrations. Remember to restart Home Assistant afterwards.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=knudsvik&repository=energyscore&category=integration)
 
-### Part 1 (HACS - preferred)
+## Configuration
 
-1. Click on the My link above *OR* open HACS, click on Integrations, then Explore and Download repositories and search for EnergyScore
-2. click Download in the bottom and then follow instructions
-3. Restart Home Assistant
+EnergyScore sensors can be added directly from the user interface by using the My Button below or alternatively by browsing to your integrations page and adding it manually. It may take up to two hours to get enough data to calculate the EnergyScore.
 
-### Part 1 (Manual alternative)
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=energyscore)
 
-1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
-2. If you do not have a `custom_components` directory (folder) there, you need to create it.
-3. In the `custom_components` directory (folder) create a new folder called `energyscore`.
-4. Download _all_ the files from the `custom_components/energyscore/` directory (folder) in this repository.
-5. Place the files you downloaded in the new directory (folder) you created.
-6. Restart Home Assistant
+Attribute | Description
+--------- | -----------
+Name | The name the sensor should have. You can change it again later.
+Energy entity | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
+Price entity | A price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 
-### Part 2 (UI - preferred)
+## YAML Configuration
 
-1. Open the integrations page
-2. Click on the + to add a new integration
-3. Search for and choose EnergyScore
-4. Choose a name and the sensors to use.
-It may take up to two hours to get enough data to calculate the EnergyScore.
+Alternatlively, this integration can be configured and set up manually via YAML instead. To enable the Integration sensor in your installation, add the following to your `configuration.yaml` file:
 
-### Part 2 (YAML alternative)
-
-1. Add following to your `configuration.yaml`
-    ```yaml
-    sensor:
-      - platform: energyscore
-        name: Heater Energy Score
-        unique_id: AC816DB0-868A-431C-92AE-CBD46A864DC5
-        price_entity: sensor.nordpool_electricity_price
-        energy_entity: sensor.heater_energy
-    ```
-2. Customise the configuration with your own entities and unique_id's
-3. Restart Home Assistant.
-It may take up to two hours to get enough data to calculate the EnergyScore.
+```yaml
+sensor:
+  - platform: energyscore
+    name: Heater Energy Score
+    energy_entity: sensor.heater_energy
+    price_entity: sensor.nordpool_electricity_price
+```
 
 ### Configuration variables
 
 Attribute | Data type | Type | Description
 --------- | --------- | ---- | -----------
-name | string | Required | Name for the platform entity which must be unique within the platform.
-unique_id | string | Required | An ID that uniquely identifies this sensor. If two sensors have the same unique ID, Home Assistant will raise an exception.
-price_entity | string | Required | The entity_id of an entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
-energy_entity | string | Required | The entity_id of an entity which provides the total increasing energy use as the state, e.g. from Tibber or PowerCalc integrations or a state from a device. The energy entity can also be a total that resets at given intervals.
+name | string | Required | Name of the sensor to use in the frontend.
+energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
+price_entity | string | Required | TA price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
+unique_id | string | Optional | Unique id to be able to configure the entity in the UI.
 
 
-### Debugging
+## Debugging
 
-The integration can be debugged with following code in your `configuration.yaml` which will provide information on sensor updates in the Home Assistant log.
+The integration can be debugged in several ways.
+
+### From user interface
+Go to your integrations dashboard (My Button below), choose an EnergyScore sensor to be debugged, click the three dots and then Enable debug logging.
+
+[![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/)
+
+### Always-on by use of YAML
+The following code in your `configuration.yaml` will provide continuous information on EnergyScore sensor updates in the Home Assistant log.
 
 ```yaml
 logger:
@@ -76,7 +74,10 @@ logger:
     custom_components.energyscore: debug
 ```
 
-You can also start debugging with a service call:
+
+### Service call
+
+You can start debugging with a service call:
 
 ```yaml
 service: logger.set_level
