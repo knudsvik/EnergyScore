@@ -55,6 +55,6 @@ class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
             self.data["unique_id"] = _unique_id
 
-            return self.async_create_entry(title="EnergyScore", data=self.data)
+            return self.async_create_entry(title=self.data["name"], data=self.data)
 
         return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)

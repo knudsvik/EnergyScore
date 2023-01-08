@@ -44,7 +44,7 @@ async def test_flow_creates_config_entry(hass):
     await hass.async_block_till_done()
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
-    assert result["title"] == "EnergyScore"
+    assert result["title"] == "UI EnergyScore"
     assert result["data"] == {
         "name": "UI EnergyScore",
         "energy_entity": "sensor.energy_ui",
