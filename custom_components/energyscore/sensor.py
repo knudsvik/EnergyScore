@@ -35,7 +35,6 @@ from .const import (
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
-DOMAIN = "energyscore"
 
 # Time between updating data
 SCAN_INTERVAL = datetime.timedelta(minutes=10)

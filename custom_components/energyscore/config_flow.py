@@ -48,19 +48,12 @@ class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.data = user_input
 
             # Create a unique ID:
-            _LOGGER.warning("SELF DATA before: %s", self.data)
             _unique_id = (
                 f"ES_{self.data['energy_entity']}_{self.data['price_entity']}".replace(
                     "sensor.", ""
                 )
             )
-
             self.data["unique_id"] = _unique_id
-            _LOGGER.warning("SELF DATA after: %s", self.data)
-
-            # await self.async_set_unique_id(_unique_id)
-            # virker ikke? alternativt bare sette self.data[unique_id]?
-            # self._abort_if_unique_id_configured()
 
             return self.async_create_entry(title="EnergyScore", data=self.data)
 
