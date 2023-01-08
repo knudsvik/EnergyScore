@@ -1,0 +1,18 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "price_entity": "Price entity",
+                    "energy_entity": "Energy entity",
+                    "name": "Name of the EnergyScore sensor"
+                },
+                "description": "EnergyScore is created from an energy and a price sensor. Please choose the relevant sensors:",
+                "title": "Choose source entities"
+            }
+        },
+        "abort": {
+            "already_configured": "The entity configuration is already configured"
+        }
+    }
+}

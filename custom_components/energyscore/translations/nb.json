@@ -1,0 +1,18 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "price_entity": "Prisenhet",
+                    "energy_entity": "Energienhet",
+                    "name": "Navnet på EnergyScore sensoren"
+                },
+                "description": "EnergyScore blir laget av en energi- og en prisenhet. Vennligst velg de relevante sensorene:",
+                "title": "Velg kildeenheter"
+            }
+        },
+        "abort": {
+            "already_configured": "Denne kombinasjonen av enheter er allerede konfigurert"
+        }
+    }
+}

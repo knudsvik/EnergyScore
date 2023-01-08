@@ -8,6 +8,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
     CONF_UNIQUE_ID,
@@ -25,6 +26,7 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
+    DOMAIN,
     ENERGY,
     ICON,
     LAST_UPDATED,
@@ -33,6 +35,7 @@ from .const import (
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+DOMAIN = "energyscore"
 
 # Time between updating data
 SCAN_INTERVAL = datetime.timedelta(minutes=10)
@@ -42,9 +45,21 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
-        vol.Required(CONF_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_UNIQUE_ID): cv.string,
     }
 )
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities,
+):
+    """Setup sensors from a config entry created in the integrations UI"""
+
+    # Reading the config from UI
+    config = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
 async def async_setup_platform(
@@ -53,7 +68,7 @@ async def async_setup_platform(
     async_add_entities: Callable,
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
-    """Set up the sensors from YAML config"""
+    """Set up sensors from YAML config"""
     async_add_entities([EnergyScore(hass, config)], update_before_add=False)
 
 
@@ -80,16 +95,17 @@ def normalise_energy(energy_dict) -> dict:
 
 
 class EnergyScore(SensorEntity, RestoreEntity):
-    """EnergyScore Sensor class."""
+    """EnergyScore Sensor class"""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
     def __init__(self, hass, config):
         self._attr_icon: str = ICON
-        self._attr_unique_id = config[CONF_UNIQUE_ID]
+        self._attr_unique_id = config.get(CONF_UNIQUE_ID)
         self._energy = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
+        self.hass = hass  # TODO: needed?
         self._name = config[CONF_NAME]
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
@@ -105,8 +121,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
             PRICES: {},
             LAST_UPDATED: None,
         }
-
-        self.hass = hass
 
     @property
     def name(self) -> str:

@@ -1,12 +1,12 @@
 {
   "domain": "energyscore",
   "name": "EnergyScore",
-  "integration_type": "entity",
+  "integration_type": "device",
   "documentation": "https://github.com/knudsvik/energyscore",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/knudsvik/energyscore/issues",
-  "version": "0.4.1",
-  "config_flow": false,
+  "version": "0.5.0",
+  "config_flow": true,
   "codeowners": [
     "@knudsvik"
   ]
