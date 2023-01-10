@@ -155,7 +155,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
         now = dt.now().replace(
             minute=0, second=0, microsecond=0
         )  # TZ aware datetime obj based on user settings
-        # TODO: create function for this (also used elsewhere)
 
         # Parse datetimes from strings
         for i in [ENERGY, PRICES]:
@@ -164,15 +163,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
                 for key, value in self.attr[i].items()
                 if isinstance(key, str)
             }
-
-        # Clean out old data:
-        cutoff = now - datetime.timedelta(hours=self._rolling_hours)
-        self.attr[PRICES] = {
-            time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
-        }
-        self.attr[ENERGY] = {
-            time: value for (time, value) in self.attr[ENERGY].items() if time > cutoff
-        }
 
         # Add new data, need to check declining energy first
         previous = now - datetime.timedelta(hours=1)
@@ -230,6 +220,15 @@ class EnergyScore(SensorEntity, RestoreEntity):
             self._name,
             [round(val, 2) for key, val in _energy_usage.items()],
         )
+
+        # Clean out old data:
+        cutoff = now - datetime.timedelta(hours=self._rolling_hours)
+        self.attr[PRICES] = {
+            time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
+        }
+        self.attr[ENERGY] = {
+            time: value for (time, value) in self.attr[ENERGY].items() if time > cutoff
+        }
 
         # Calculate quality and break out if applicable
         q = min(len(self.attr[PRICES]), len(_energy_usage)) / self._rolling_hours
