@@ -301,7 +301,7 @@ async def test_declining_energy_unsupported_state_classes(hass, caplog):
         )
 
 
-async def test_declining_energy_supported_state_classes(hass, caplog):
+async def test_declining_energy_supported_state_classes(hass):
     """Testing that energyscore handles energy sensors that declines with supported state_classes"""
 
     initial_datetime = dt.parse_datetime("2021-12-31 22:08:44-08:00")
@@ -353,3 +353,27 @@ async def test_declining_energy_supported_state_classes(hass, caplog):
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
         assert state.state == "33"
+
+
+async def test_quality(hass: HomeAssistant) -> None:
+    """Test that the quality attribute is behaving correctly"""
+
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+        await hass.async_block_till_done()
+
+        for hour in range(1, 27):
+            print(f"- - - - HOUR: {hour} - - - -")
+            hass.states.async_set("sensor.energy", hour**2)
+            hass.states.async_set("sensor.electricity_price", 1 / hour)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            state = hass.states.get("sensor.my_mock_es")
+            print(f"- - - - Quality: {state.attributes[QUALITY]} - - - -")
+            if hour >= 25:
+                assert state.attributes[QUALITY] == 1
+            else:
+                assert state.attributes[QUALITY] == round((hour - 1) / 24, 2)
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
