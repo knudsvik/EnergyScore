@@ -94,8 +94,15 @@ async def test_update_sensor(hass: HomeAssistant, caplog) -> None:
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert "2022-09-18T13:00:00-0700" not in state.attributes.get("total_energy")
         assert "2022-09-18T13:00:00-0700" not in state.attributes.get("price")
+        # 1 extra hour of energy data is kept to be able to calculate energy usage
+        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+        hass.states.async_set("sensor.energy", 190)
+        hass.states.async_set("sensor.electricity_price", 1)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+        state = hass.states.get("sensor.my_mock_es")
+        assert "2022-09-18T13:00:00-0700" not in state.attributes.get("total_energy")
 
 
 async def test_unavailable_sources(hass: HomeAssistant, caplog) -> None:
@@ -365,15 +372,23 @@ async def test_quality(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(1, 27):
-            print(f"- - - - HOUR: {hour} - - - -")
             hass.states.async_set("sensor.energy", hour**2)
             hass.states.async_set("sensor.electricity_price", 1 / hour)
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             state = hass.states.get("sensor.my_mock_es")
-            print(f"- - - - Quality: {state.attributes[QUALITY]} - - - -")
             if hour >= 25:
                 assert state.attributes[QUALITY] == 1
             else:
                 assert state.attributes[QUALITY] == round((hour - 1) / 24, 2)
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+        # Advance 10 minute slots to verify all parts of an hour:
+        for part_hour in range(1,6):
+            frozen_datetime.tick(delta=datetime.timedelta(minutes=10))
+            hass.states.async_set("sensor.energy", 700 + part_hour)
+            hass.states.async_set("sensor.electricity_price", part_hour)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            state = hass.states.get("sensor.my_mock_es")
+            assert state.attributes[QUALITY] == 1

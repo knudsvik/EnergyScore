@@ -222,13 +222,13 @@ class EnergyScore(SensorEntity, RestoreEntity):
         )
 
         # Clean out old data:
-        cutoff = now - datetime.timedelta(hours=self._rolling_hours)
-        self.attr[PRICES] = {
-            time: value for (time, value) in self.attr[PRICES].items() if time > cutoff
-        }
-        self.attr[ENERGY] = {
-            time: value for (time, value) in self.attr[ENERGY].items() if time > cutoff
-        }
+        def cutoff(data: dict, hours: int) -> dict:
+            """Cuts off old energy and price data"""
+            cut_hours = now - datetime.timedelta(hours=hours)
+            return {time: value for (time, value) in data.items() if time > cut_hours}
+
+        self.attr[PRICES] = cutoff(self.attr[PRICES], self._rolling_hours)
+        self.attr[ENERGY] = cutoff(self.attr[ENERGY], self._rolling_hours + 1)
 
         # Calculate quality and break out if applicable
         q = min(len(self.attr[PRICES]), len(_energy_usage)) / self._rolling_hours
