@@ -14,5 +14,12 @@
         "abort": {
             "already_configured": "The entity configuration is already configured"
         }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title:": "Manage options"
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 """
 ConfigFlow for EnergyScore
-Inspiration from Aaron Godfrey's custom component tutorial, part 3
+Inspiration from Aaron Godfrey's custom component tutorial, parts 3 and 4
 """
 
 from typing import Any
@@ -8,6 +8,8 @@ from typing import Any
 from homeassistant import config_entries
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
+from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -58,3 +60,39 @@ class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(title=self.data["name"], data=self.data)
 
         return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Create the options flow."""
+        return OptionsFlowHandler(config_entry)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
+        self.config_entry = config_entry
+        _LOGGER.warning("The config_entry has been loaded: %s", self.config_entry)
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title="", data=user_input
+            )  # Pass the data name?
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        "energy_treshold",
+                        default=0,  # check aaron or official here, could lookup.
+                    ): float
+                }
+            ),
+        )

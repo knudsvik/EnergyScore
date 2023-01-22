@@ -58,7 +58,10 @@ async def async_setup_entry(
 
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
-    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
+    energy_treshold = config_entry.options.get("energy_treshold")
+    async_add_entities(
+        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+    )
 
 
 async def async_setup_platform(
@@ -99,7 +102,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, config):
+    def __init__(self, hass, config, energy_treshold=0):
         self._attr_icon: str = ICON
         self._attr_unique_id = config.get(CONF_UNIQUE_ID)
         self._energy = None

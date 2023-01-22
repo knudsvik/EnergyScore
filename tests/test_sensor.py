@@ -384,7 +384,7 @@ async def test_quality(hass: HomeAssistant) -> None:
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         # Advance 10 minute slots to verify all parts of an hour:
-        for part_hour in range(1,6):
+        for part_hour in range(1, 6):
             frozen_datetime.tick(delta=datetime.timedelta(minutes=10))
             hass.states.async_set("sensor.energy", 700 + part_hour)
             hass.states.async_set("sensor.electricity_price", part_hour)
