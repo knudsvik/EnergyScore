@@ -12,19 +12,7 @@ More advanced visualisations can also be created, e.g. with the [ApexCharts-card
 
 <img src="resources/apex_visual.png" title="ApexChart RadialBar"/>
 
-To set up this, start by creating a template sensor for the quality:
-
-```yaml
-sensor:
-  - platform: template
-    sensors:
-      washer_energy_score_quality:
-        friendly_name: Washer Energy Score Quality
-        unit_of_measurement: '%'
-        value_template: "{{ state_attr('sensor.washer_energy_score', 'quality') * 100 }}"
-```
-
-Then use this configuration for the apexchart-card:
+To set up this, use this configuration for the apexchart-card:
 
 ```yaml
 type: custom:apexcharts-card
@@ -55,7 +43,9 @@ series:
         color: orange
       - value: 60
         color: green
-  - entity: sensor.washer_energy_score_quality
+  - entity: sensor.washer_energy_score
+    attribute: quality
+    transform: return x * 100;
     name: Quality
     max: 100
     show:
