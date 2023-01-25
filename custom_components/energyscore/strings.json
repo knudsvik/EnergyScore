@@ -18,11 +18,11 @@
     "options": {
         "step": {
             "init": {
-                "title:": "Manage options",
+                "title": "Manage options",
                 "data": {
                     "energy_treshold": "Energy Treshold (default = 0)"
                 },
-                "description": "See documentation for how these will affect the EnergyScore"
+                "description": "See documentation for how these options affect the EnergyScore"
             }
         }
     }

@@ -18,11 +18,11 @@
     "options": {
         "step": {
             "init": {
-                "title:": "Alternativ xx",
+                "title": "Alternativer",
                 "data": {
                     "energy_treshold": "Energigrense (standardverdi = 0)"
                 },
-                "description": "Se dokumentasjon for forklaring på hvordan disse påvirker EnergyScore"
+                "description": "Se dokumentasjon for forklaring på hvordan alternativene påvirker EnergyScore"
             }
         }
     }
