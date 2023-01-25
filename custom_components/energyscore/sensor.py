@@ -58,7 +58,10 @@ async def async_setup_entry(
 
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
+    _LOGGER.debug(" -- ES: Config: %s", config)
     energy_treshold = config_entry.options.get("energy_treshold")
+    _LOGGER.debug(" -- ES: The energy treshold get got: %s", energy_treshold)
+    _LOGGER.debug(" -- ES: Config: %s", config)
     async_add_entities(
         [EnergyScore(hass, config, energy_treshold)], update_before_add=False
     )
@@ -115,6 +118,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._rolling_hours = 24
         self._state = 100
+        self.treshold = energy_treshold
         self.attr = {
             CONF_ENERGY_ENTITY: self._energy_entity,
             CONF_PRICE_ENTITY: self._price_entity,
@@ -123,6 +127,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
             PRICES: {},
             LAST_UPDATED: None,
         }
+        _LOGGER.debug(" -- ES %s: Treshold: %s", self._name, self.treshold)
 
     @property
     def name(self) -> str:

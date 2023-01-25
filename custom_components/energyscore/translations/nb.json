@@ -14,5 +14,16 @@
         "abort": {
             "already_configured": "Denne kombinasjonen av enheter er allerede konfigurert"
         }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title:": "Alternativ xx",
+                "data": {
+                    "energy_treshold": "Energigrense (standardverdi = 0)"
+                },
+                "description": "Se dokumentasjon for forklaring på hvordan disse påvirker EnergyScore"
+            }
+        }
     }
 }

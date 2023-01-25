@@ -17,21 +17,14 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up platform from a ConfigEntry."""
 
-    # hass.data.setdefault(DOMAIN, {})
-    # hass.data[DOMAIN][entry.entry_id] = entry.data
-
-    hass_data = dict(entry.data)
-    _LOGGER.warning("Hass_data: %s", hass_data)
-    # Registers update listener to update config entry when options are updated.
-    unsub_options_update_listener = entry.add_update_listener(options_update_listener)
-    # Store a reference to the unsubscribe function to cleanup if an entry is unloaded.
-    hass_data["unsub_options_update_listener"] = unsub_options_update_listener
-    hass.data[DOMAIN][entry.entry_id] = hass_data
-
     # Forward the setup to the sensor platform.
     await hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
+
+    # Registers update listener to update config entry when options are updated.
+    entry.async_on_unload(entry.add_update_listener(async_update_entry))
+
     return True
 
 
@@ -41,7 +34,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
-async def options_update_listener(hass: HomeAssistant, config_entry: ConfigEntry):
+async def async_update_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Handle options update."""
-    _LOGGER.warning("The update_listener has been called (only upon new data)")
-    await hass.config_entries.async_reload(config_entry.entry_id)
+    _LOGGER.debug(" -- ES: The update_listener has been called (only upon new data)")
+    await hass.config_entries.async_reload(entry.entry_id)

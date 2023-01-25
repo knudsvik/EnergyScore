@@ -37,8 +37,3 @@ sensor:
     energy_entity: sensor.total_energy_consumption
     price_entity: sensor.electricity_price
     unique_id: fknfkkkf
-  - platform: energyscore
-    name: Dishwasher Energy Score
-    energy_entity: sensor.dishwasher_energy
-    price_entity: sensor.electricity_price
-    # unique_id: fknmekfefldmffdefdfd

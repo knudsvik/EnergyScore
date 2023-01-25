@@ -14,5 +14,16 @@
         "abort": {
             "already_configured": "The entity combination is already configured"
         }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title:": "Manage options",
+                "data": {
+                    "energy_treshold": "Energy Treshold (default = 0)"
+                },
+                "description": "See documentation for how these will affect the EnergyScore"
+            }
+        }
     }
 }
