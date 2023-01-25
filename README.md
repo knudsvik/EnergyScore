@@ -34,6 +34,14 @@ Name | The name the sensor should have. You can change it again later.
 Energy entity | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
 Price entity | A price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 
+### Advanced configuration
+Some more options are available for advanced use and can be set up after initial setup by clicking the configure button in the integration.
+
+Attribute | Description | Default
+--------- | ----------- | -------
+Energy Treshold | Energy less than the treshold (during one hour) will not contribute to the EnergyScore | 0
+
+
 ## YAML Configuration
 
 Alternatively, this integration can be configured and set up manually via YAML instead. To enable the Integration sensor in your installation, add the following to your `configuration.yaml` file:
@@ -54,6 +62,7 @@ name | string | Required | Name of the sensor to use in the frontend.
 energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
 price_entity | string | Required | TA price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 unique_id | string | Optional | Unique id to be able to configure the entity in the UI.
+energy_treshold | float | Optional | Energy less than the treshold (during one hour) will not contribute to the EnergyScore.
 
 
 ## Debugging
