@@ -26,6 +26,7 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
+    CONF_TRESHOLD,
     DOMAIN,
     ENERGY,
     ICON,
@@ -45,6 +46,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_TRESHOLD): vol.Coerce(float),
     }
 )
 
@@ -58,10 +60,7 @@ async def async_setup_entry(
 
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
-    _LOGGER.debug(" -- ES: Config: %s", config)
     energy_treshold = config_entry.options.get("energy_treshold")
-    _LOGGER.debug(" -- ES: The energy treshold get got: %s", energy_treshold)
-    _LOGGER.debug(" -- ES: Config: %s", config)
     async_add_entities(
         [EnergyScore(hass, config, energy_treshold)], update_before_add=False
     )

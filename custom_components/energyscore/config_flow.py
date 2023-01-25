@@ -80,8 +80,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
         self.current_config: dict = dict(config_entry.data)
-        _LOGGER.debug(" -- ES: The config_entry has been loaded: %s", self.config_entry)
+        self.current_options = dict(config_entry.options)
         _LOGGER.debug(" -- ES: The current config is: %s", self.current_config)
+        _LOGGER.debug(
+            " -- ES: The current config options are: %s", self.current_options
+        )
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -89,16 +92,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Manage the options."""
 
         if user_input is not None:
-            _LOGGER.debug(" -- ES: The user input: %s", user_input)
-            # Following DOES NOT STICK! WHY?
-            self.current_config.update({CONF_TRESHOLD: user_input[CONF_TRESHOLD]})
+            # _LOGGER.debug(" -- ES: The user input: %s", user_input)
+            # Following DOES NOT STICK! WHY? maybe not needed
+            # self.current_config.update({CONF_TRESHOLD: user_input[CONF_TRESHOLD]})
             return self.async_create_entry(title="", data=user_input)
 
         options_schema = vol.Schema(
             {
                 vol.Optional(
                     "energy_treshold",
-                    default=0,  # check aaron or official here, could lookup.
+                    default=self.current_options[CONF_TRESHOLD],
                 ): vol.Coerce(float)
             }
         )
