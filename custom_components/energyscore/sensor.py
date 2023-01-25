@@ -46,7 +46,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
-        vol.Optional(CONF_TRESHOLD): vol.Coerce(float),
+        vol.Optional(CONF_TRESHOLD, default=0): vol.Coerce(float),
     }
 )
 
@@ -73,7 +73,10 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up sensors from YAML config"""
-    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
+    energy_treshold = config[CONF_TRESHOLD]
+    async_add_entities(
+        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+    )
 
 
 def normalise_price(price_dict) -> dict:
@@ -104,7 +107,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, config, energy_treshold=0):
+    def __init__(self, hass, config, energy_treshold):
         self._attr_icon: str = ICON
         self._attr_unique_id = config.get(CONF_UNIQUE_ID)
         self._energy = None
@@ -117,7 +120,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._rolling_hours = 24
         self._state = 100
-        self.treshold = energy_treshold
+        self._treshold = energy_treshold
         self.attr = {
             CONF_ENERGY_ENTITY: self._energy_entity,
             CONF_PRICE_ENTITY: self._price_entity,
@@ -126,7 +129,6 @@ class EnergyScore(SensorEntity, RestoreEntity):
             PRICES: {},
             LAST_UPDATED: None,
         }
-        _LOGGER.debug(" -- ES %s: Treshold: %s", self._name, self.treshold)
 
     @property
     def name(self) -> str:
