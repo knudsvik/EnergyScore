@@ -224,6 +224,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
             elif previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
                 _energy_usage[key] = value
 
+        # Remove all energy usage below treshold:
+        _energy_usage = {k: v for k, v in _energy_usage.items() if v >= self._treshold}
+
         _LOGGER.debug(
             "%s - Calc. energy usage: %s",
             self._name,
