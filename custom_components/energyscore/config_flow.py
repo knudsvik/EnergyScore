@@ -3,6 +3,7 @@ ConfigFlow for EnergyScore
 Inspiration from Aaron Godfrey's custom component tutorial, parts 3 and 4
 """
 
+import logging
 from typing import Any
 
 from homeassistant import config_entries
@@ -12,15 +13,13 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 from homeassistant.helpers.entity_registry import (
     async_entries_for_config_entry,
     async_get_registry,
 )
+import voluptuous as vol
 
 from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, CONF_TRESHOLD, DOMAIN
-
-import logging
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
