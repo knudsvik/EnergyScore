@@ -18,7 +18,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, Optional
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt
 import numpy as np
 import voluptuous as vol
@@ -70,7 +70,7 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities: Callable,
-    discovery_info: Optional[DiscoveryInfoType] = None,
+    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up sensors from YAML config"""
     energy_treshold = config[CONF_TRESHOLD]
