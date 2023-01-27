@@ -26,6 +26,7 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
+    CONF_TRESHOLD,
     DOMAIN,
     ENERGY,
     ICON,
@@ -45,6 +46,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
+        vol.Optional(CONF_TRESHOLD, default=0): vol.Coerce(float),
     }
 )
 
@@ -58,7 +60,10 @@ async def async_setup_entry(
 
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
-    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
+    energy_treshold = config_entry.options.get("energy_treshold")
+    async_add_entities(
+        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+    )
 
 
 async def async_setup_platform(
@@ -68,7 +73,10 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up sensors from YAML config"""
-    async_add_entities([EnergyScore(hass, config)], update_before_add=False)
+    energy_treshold = config[CONF_TRESHOLD]
+    async_add_entities(
+        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+    )
 
 
 def normalise_price(price_dict) -> dict:
@@ -99,7 +107,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, config):
+    def __init__(self, hass, config, energy_treshold):
         self._attr_icon: str = ICON
         self._attr_unique_id = config.get(CONF_UNIQUE_ID)
         self._energy = None
@@ -112,6 +120,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._rolling_hours = 24
         self._state = 100
+        self._treshold = energy_treshold
         self.attr = {
             CONF_ENERGY_ENTITY: self._energy_entity,
             CONF_PRICE_ENTITY: self._price_entity,
@@ -214,6 +223,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
                     _energy_usage[key] = value - self.attr[ENERGY][previous]
             elif previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
                 _energy_usage[key] = value
+
+        # Remove all energy usage below treshold:
+        _energy_usage = {k: v for k, v in _energy_usage.items() if v >= self._treshold}
 
         _LOGGER.debug(
             "%s - Calc. energy usage: %s",

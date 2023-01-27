@@ -2,6 +2,7 @@
 Sensor tests for EnergyScore
 """
 
+import copy
 import datetime
 
 from freezegun import freeze_time
@@ -384,7 +385,7 @@ async def test_quality(hass: HomeAssistant) -> None:
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         # Advance 10 minute slots to verify all parts of an hour:
-        for part_hour in range(1,6):
+        for part_hour in range(1, 6):
             frozen_datetime.tick(delta=datetime.timedelta(minutes=10))
             hass.states.async_set("sensor.energy", 700 + part_hour)
             hass.states.async_set("sensor.electricity_price", part_hour)
@@ -392,3 +393,28 @@ async def test_quality(hass: HomeAssistant) -> None:
             await hass.async_block_till_done()
             state = hass.states.get("sensor.my_mock_es")
             assert state.attributes[QUALITY] == 1
+
+
+async def test_energy_treshold(hass: HomeAssistant) -> None:
+    """Test that the treshold function is working as intended"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["energy_treshold"] = 0.8
+
+    energy = [1, 2, 3, 3.4, 3.5, 3.7, 4.1]
+
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", CONFIG)
+        await hass.async_block_till_done()
+
+        for hour in range(0, 7):
+            hass.states.async_set("sensor.energy", energy[hour])
+            hass.states.async_set("sensor.electricity_price", hour)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+        state = hass.states.get("sensor.my_mock_es")
+        assert state.state == "75"
+        assert state.attributes[QUALITY] == 0.08

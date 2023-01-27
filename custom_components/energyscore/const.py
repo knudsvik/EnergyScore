@@ -8,6 +8,7 @@ ICON = "mdi:speedometer"
 # Configuration and options
 CONF_PRICE_ENTITY = "price_entity"
 CONF_ENERGY_ENTITY = "energy_entity"
+CONF_TRESHOLD = "energy_treshold"
 
 # Other
 ENERGY = "total_energy"

@@ -1,13 +1,16 @@
 """
 ConfigFlow tests for EnergyScore
 Inspiration from
-- Aaron Godfrey's custom component tutorial, part 3
+- Aaron Godfrey's custom component tutorial, parts 3 and 4
 - MinMax ConfigEntry tests
 """
 from unittest import mock
 
-from custom_components.energyscore import config_flow
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.energyscore import config_flow
+from custom_components.energyscore.const import DOMAIN
 
 from .const import VALID_UI_CONFIG
 
@@ -58,3 +61,28 @@ async def test_flow_creates_config_entry(hass):
     assert state.attributes.get("price_entity") == "sensor.price_ui"
     assert state.attributes.get("friendly_name") == "UI EnergyScore"
     assert state.attributes.get("icon") == "mdi:speedometer"
+
+
+async def test_options_flow_add_treshold(hass):
+    """Test that added treshold in options flow is saved to config"""
+
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="blablabla",
+        data=VALID_UI_CONFIG,
+        options={"energy_treshold": 0},
+    )
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    # show initial form
+    result = await hass.config_entries.options.async_init(config_entry.entry_id)
+    # submit form with options
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"energy_treshold": 2.3},
+    )
+
+    energy_treshold = config_entry.options.get("energy_treshold")
+    assert energy_treshold == 2.3

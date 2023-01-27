@@ -18,7 +18,6 @@ VALID_CONFIG = {
         "name": "My Mock ES",
         "energy_entity": "sensor.energy",
         "price_entity": "sensor.electricity_price",
-        "unique_id": "CA0C3E3-38D3-4A79-91CC-1291dwAA3828",
     }
 }
 
