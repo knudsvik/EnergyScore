@@ -80,6 +80,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
         self.current_config: dict = dict(config_entry.data)
         self.current_options = dict(config_entry.options)
+        if not CONF_TRESHOLD in self.current_options:
+            self.current_options[CONF_TRESHOLD] = 0
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
