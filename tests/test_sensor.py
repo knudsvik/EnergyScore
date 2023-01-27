@@ -395,7 +395,7 @@ async def test_quality(hass: HomeAssistant) -> None:
             assert state.attributes[QUALITY] == 1
 
 
-async def test_treshold(hass: HomeAssistant) -> None:
+async def test_energy_treshold(hass: HomeAssistant) -> None:
     """Test that the treshold function is working as intended"""
 
     CONFIG = copy.deepcopy(VALID_CONFIG)
