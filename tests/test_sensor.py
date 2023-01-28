@@ -9,6 +9,7 @@ from freezegun import freeze_time
 from homeassistant.components import sensor
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, State
+import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.restore_state import (
     DATA_RESTORE_STATE_TASK,
     RestoreStateData,
@@ -46,6 +47,19 @@ async def test_new_config(hass: HomeAssistant) -> None:
     assert state.attributes.get("unit_of_measurement") == "%"
     assert state.attributes.get("icon") == "mdi:speedometer"
     assert state.attributes.get("friendly_name") == "My Mock ES"
+
+
+async def test_unique_id(hass: HomeAssistant) -> None:
+    """Testing a default setup with unique_id"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["unique_id"] = "Testing123"
+
+    assert await async_setup_component(hass, "sensor", CONFIG)
+    await hass.async_block_till_done()
+
+    entity_reg = er.async_get(hass)
+    assert entity_reg.async_get("sensor.my_mock_es").unique_id == "Testing123"
 
 
 def test_normalisation() -> None:
