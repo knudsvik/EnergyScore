@@ -62,6 +62,8 @@ async def async_setup_entry(
     config = hass.data[DOMAIN][config_entry.entry_id]
     uid = config_entry.unique_id
     energy_treshold = config_entry.options.get(CONF_TRESHOLD)
+    if energy_treshold == None:
+        energy_treshold = 0
     async_add_entities(
         [EnergyScore(hass, config, uid, energy_treshold)], update_before_add=False
     )
