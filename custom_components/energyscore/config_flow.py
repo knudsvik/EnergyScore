@@ -57,7 +57,8 @@ class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "sensor.", ""
                 )
             )
-            self.data["unique_id"] = _unique_id
+            await self.async_set_unique_id(_unique_id)
+            self._abort_if_unique_id_configured()
 
             return self.async_create_entry(title=self.data["name"], data=self.data)
 
