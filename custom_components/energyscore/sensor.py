@@ -113,7 +113,9 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
     def __init__(self, hass, config, uid, energy_treshold):
         self._attr_icon: str = ICON
-        self._attr_unique_id = uid
+        # self._attr_unique_id = uid
+        self._attr_unique_id = config.get(CONF_UNIQUE_ID)
+
         self._energy = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self.hass = hass  # TODO: needed?
