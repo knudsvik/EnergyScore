@@ -52,6 +52,7 @@ async def test_flow_creates_config_entry(hass):
         "name": "UI EnergyScore",
         "energy_entity": "sensor.energy_ui",
         "price_entity": "sensor.price_ui",
+        "unique_id": "ES_energy_ui_price_ui",
     }
     assert result["context"]["unique_id"] == "ES_energy_ui_price_ui"
 
