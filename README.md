@@ -64,7 +64,7 @@ energy_entity | string | Required | A total (cumulative) energy entity, e.g. fro
 price_entity | string | Required | TA price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 unique_id | string | Optional | Unique id to be able to configure the entity in the UI.
 energy_treshold | float | Optional | Energy less than the treshold (during one hour) will not contribute to the EnergyScore (default = 0).
-rolling_hours | int | Optional | The number of hours the EnergyScore should be calculated from (default = 24).
+rolling_hours | int | Optional | The number of hours the EnergyScore should be calculated from (default=24, min=2, max=168).
 
 
 ## Debugging

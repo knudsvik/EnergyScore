@@ -48,7 +48,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_TRESHOLD, default=0): vol.Coerce(float),
-        vol.Optional(CONF_ROLLING_HOURS, default=24): int,
+        vol.Optional(CONF_ROLLING_HOURS, default=24): vol.All(
+            int, vol.Range(min=2, max=168)
+        ),
     }
 )
 
@@ -64,6 +66,8 @@ async def async_setup_entry(
     config = hass.data[DOMAIN][config_entry.entry_id]
     energy_treshold = config_entry.options.get(CONF_TRESHOLD)
     rolling_hours = config_entry.options.get(CONF_ROLLING_HOURS)
+    _LOGGER.debug("Config: %s", config)
+    _LOGGER.debug("Options: %s", config_entry.options)
     async_add_entities(
         [EnergyScore(hass, config, energy_treshold, rolling_hours)],
         update_before_add=False,
@@ -79,6 +83,7 @@ async def async_setup_platform(
     """Set up sensors from YAML config"""
     energy_treshold = config[CONF_TRESHOLD]
     rolling_hours = config[CONF_ROLLING_HOURS]
+    _LOGGER.debug("Config: %s", config)
     async_add_entities(
         [EnergyScore(hass, config, energy_treshold, rolling_hours)],
         update_before_add=False,

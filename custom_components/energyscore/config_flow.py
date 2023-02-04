@@ -111,7 +111,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ): vol.Coerce(float),
                 vol.Optional(
                     CONF_ROLLING_HOURS, default=self.current_options[CONF_ROLLING_HOURS]
-                ): int,
+                ): vol.All(int, vol.Range(min=2, max=168)),
             }
         )
 

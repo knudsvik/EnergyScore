@@ -489,3 +489,27 @@ async def test_rolling_hours_default(hass: HomeAssistant) -> None:
 
         state = hass.states.get("sensor.my_mock_es")
         assert len(state.attributes[PRICES]) == 24
+
+
+async def test_rolling_hours_range_low(hass: HomeAssistant, caplog) -> None:
+    """Test rolling hours outside range"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["rolling_hours"] = 1
+    assert await async_setup_component(hass, "sensor", CONFIG)
+    assert (
+        "value must be at least 2 for dictionary value @ data['rolling_hours']. Got 1"
+        in caplog.text
+    )
+
+
+async def test_rolling_hours_range_high(hass: HomeAssistant, caplog) -> None:
+    """Test rolling hours outside range"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["rolling_hours"] = 170
+    assert await async_setup_component(hass, "sensor", CONFIG)
+    assert (
+        "value must be at most 168 for dictionary value @ data['rolling_hours']. Got 170"
+        in caplog.text
+    )
