@@ -71,7 +71,6 @@ async def test_options_flow_add_treshold(hass):
         domain=DOMAIN,
         unique_id="blablabla",
         data=VALID_UI_CONFIG,
-        options={"energy_treshold": 0},
     )
     config_entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(config_entry.entry_id)
