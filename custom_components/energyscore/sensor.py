@@ -60,12 +60,11 @@ async def async_setup_entry(
 
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
-    uid = config_entry.unique_id
     energy_treshold = config_entry.options.get(CONF_TRESHOLD)
     if energy_treshold == None:
         energy_treshold = 0
     async_add_entities(
-        [EnergyScore(hass, config, uid, energy_treshold)], update_before_add=False
+        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
     )
 
 
@@ -77,9 +76,8 @@ async def async_setup_platform(
 ) -> None:
     """Set up sensors from YAML config"""
     energy_treshold = config[CONF_TRESHOLD]
-    uid = config.get(CONF_UNIQUE_ID)
     async_add_entities(
-        [EnergyScore(hass, config, uid, energy_treshold)], update_before_add=False
+        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
     )
 
 
@@ -111,9 +109,8 @@ class EnergyScore(SensorEntity, RestoreEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, config, uid, energy_treshold):
+    def __init__(self, hass, config, energy_treshold):
         self._attr_icon: str = ICON
-        # self._attr_unique_id = uid
         self._attr_unique_id = config.get(CONF_UNIQUE_ID)
 
         self._energy = None
