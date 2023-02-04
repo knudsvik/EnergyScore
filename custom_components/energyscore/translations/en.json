@@ -20,7 +20,8 @@
             "init": {
                 "title": "Manage options",
                 "data": {
-                    "energy_treshold": "Energy Treshold (default = 0)"
+                    "energy_treshold": "Energy Treshold (default = 0)",
+                    "rolling_hours": "Rolling Hours (default = 24)"
                 },
                 "description": "See documentation for how these options affect the EnergyScore"
             }

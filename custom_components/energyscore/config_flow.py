@@ -19,7 +19,13 @@ from homeassistant.helpers.entity_registry import (
 )
 import voluptuous as vol
 
-from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, CONF_TRESHOLD, DOMAIN
+from .const import (
+    CONF_ENERGY_ENTITY,
+    CONF_PRICE_ENTITY,
+    CONF_ROLLING_HOURS,
+    CONF_TRESHOLD,
+    DOMAIN,
+)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -43,13 +49,14 @@ CONFIG_SCHEMA = vol.Schema(
 class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """EnergyScore config flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Invoked when a user initiates a flow via the user interface."""
 
         if user_input is not None:
             self.data = user_input
+            self.options = {}
 
             # Create a unique ID:
             _unique_id = (
@@ -61,7 +68,13 @@ class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             self.data["unique_id"] = _unique_id
 
-            return self.async_create_entry(title=self.data["name"], data=self.data)
+            # Set the default options:
+            self.options[CONF_TRESHOLD] = 0
+            self.options[CONF_ROLLING_HOURS] = 24
+
+            return self.async_create_entry(
+                title=self.data["name"], data=self.data, options=self.options
+            )
 
         return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)
 
@@ -82,8 +95,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
         self.current_config: dict = dict(config_entry.data)
         self.current_options = dict(config_entry.options)
-        if not CONF_TRESHOLD in self.current_options:
-            self.current_options[CONF_TRESHOLD] = 0
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -95,10 +106,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         options_schema = vol.Schema(
             {
-                vol.Optional(
-                    "energy_treshold",
-                    default=self.current_options[CONF_TRESHOLD],
-                ): vol.Coerce(float)
+                vol.Required(
+                    CONF_TRESHOLD, default=self.current_options[CONF_TRESHOLD]
+                ): vol.Coerce(float),
+                vol.Required(
+                    CONF_ROLLING_HOURS, default=self.current_options[CONF_ROLLING_HOURS]
+                ): vol.All(int, vol.Range(min=2, max=168)),
             }
         )
 

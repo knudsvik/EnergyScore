@@ -11,7 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_ROLLING_HOURS, CONF_TRESHOLD
 
 PLATFORMS = [Platform.SENSOR]
 
@@ -47,4 +47,22 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the EnergyScore integration from yaml configuration."""
     hass.data.setdefault(DOMAIN, {})
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug("Migrating from version %s", config_entry.version)
+
+    if config_entry.version == 1:
+
+        added_options = {}
+        added_options[CONF_TRESHOLD] = 0
+        added_options[CONF_ROLLING_HOURS] = 24
+
+        config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, options=added_options)
+
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+
     return True

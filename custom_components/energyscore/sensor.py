@@ -26,6 +26,7 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
+    CONF_ROLLING_HOURS,
     CONF_TRESHOLD,
     DOMAIN,
     ENERGY,
@@ -47,6 +48,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_TRESHOLD, default=0): vol.Coerce(float),
+        vol.Optional(CONF_ROLLING_HOURS, default=24): vol.All(
+            int, vol.Range(min=2, max=168)
+        ),
     }
 )
 
@@ -61,10 +65,12 @@ async def async_setup_entry(
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
     energy_treshold = config_entry.options.get(CONF_TRESHOLD)
-    if energy_treshold == None:
-        energy_treshold = 0
+    rolling_hours = config_entry.options.get(CONF_ROLLING_HOURS)
+    _LOGGER.debug("Config: %s", config)
+    _LOGGER.debug("Options: %s", config_entry.options)
     async_add_entities(
-        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+        [EnergyScore(hass, config, energy_treshold, rolling_hours)],
+        update_before_add=False,
     )
 
 
@@ -76,8 +82,11 @@ async def async_setup_platform(
 ) -> None:
     """Set up sensors from YAML config"""
     energy_treshold = config[CONF_TRESHOLD]
+    rolling_hours = config[CONF_ROLLING_HOURS]
+    _LOGGER.debug("Config: %s", config)
     async_add_entities(
-        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+        [EnergyScore(hass, config, energy_treshold, rolling_hours)],
+        update_before_add=False,
     )
 
 
@@ -109,7 +118,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, config, energy_treshold):
+    def __init__(self, hass, config, energy_treshold, rolling_hours):
         self._attr_icon: str = ICON
         self._attr_unique_id = config.get(CONF_UNIQUE_ID)
 
@@ -121,7 +130,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._norm_prices = np.array(None)
         self._price = None
         self._price_entity = config[CONF_PRICE_ENTITY]
-        self._rolling_hours = 24
+        self._rolling_hours = rolling_hours
         self._state = 100
         self._treshold = energy_treshold
         self.attr = {
@@ -230,20 +239,21 @@ class EnergyScore(SensorEntity, RestoreEntity):
         # Remove all energy usage below treshold:
         _energy_usage = {k: v for k, v in _energy_usage.items() if v >= self._treshold}
 
-        _LOGGER.debug(
-            "%s - Calc. energy usage: %s",
-            self._name,
-            [round(val, 2) for key, val in _energy_usage.items()],
-        )
-
         # Clean out old data:
         def cutoff(data: dict, hours: int) -> dict:
             """Cuts off old energy and price data"""
             cut_hours = now - datetime.timedelta(hours=hours)
             return {time: value for (time, value) in data.items() if time > cut_hours}
 
+        _energy_usage = cutoff(_energy_usage, self._rolling_hours)
         self.attr[PRICES] = cutoff(self.attr[PRICES], self._rolling_hours)
         self.attr[ENERGY] = cutoff(self.attr[ENERGY], self._rolling_hours + 1)
+
+        _LOGGER.debug(
+            "%s - Calculated energy usage: %s",
+            self._name,
+            [round(val, 2) for key, val in _energy_usage.items()],
+        )
 
         # Calculate quality and break out if applicable
         q = min(len(self.attr[PRICES]), len(_energy_usage)) / self._rolling_hours

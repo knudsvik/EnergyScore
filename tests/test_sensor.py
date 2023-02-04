@@ -4,6 +4,7 @@ Sensor tests for EnergyScore
 
 import copy
 import datetime
+import pytest
 
 from freezegun import freeze_time
 from homeassistant.components import sensor
@@ -19,14 +20,21 @@ from homeassistant.setup import async_setup_component
 from homeassistant.util import dt
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
-from custom_components.energyscore.const import QUALITY
+from custom_components.energyscore.const import QUALITY, PRICES, ENERGY
 from custom_components.energyscore.sensor import (
     SCAN_INTERVAL,
     normalise_energy,
     normalise_price,
 )
 
-from .const import EMPTY_DICT, ENERGY_DICT, PRICE_DICT, SAME_PRICE_DICT, VALID_CONFIG
+from .const import (
+    EMPTY_DICT,
+    ENERGY_DICT,
+    PRICE_DICT,
+    SAME_PRICE_DICT,
+    VALID_CONFIG,
+    ENERGY_LIST,
+)
 
 
 async def test_new_config(hass: HomeAssistant) -> None:
@@ -432,3 +440,76 @@ async def test_energy_treshold(hass: HomeAssistant) -> None:
         state = hass.states.get("sensor.my_mock_es")
         assert state.state == "75"
         assert state.attributes[QUALITY] == 0.08
+
+
+rolling_parameters = [(2, 5, 79), (4, 5, 72), (37, 40, 33)]
+
+
+@pytest.mark.parametrize("rolling_hours, hours, score", rolling_parameters)
+async def test_rolling_hours(hass: HomeAssistant, rolling_hours, hours, score) -> None:
+    """Test that the rolling hours functiton is working as intended"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["rolling_hours"] = rolling_hours
+
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", CONFIG)
+        await hass.async_block_till_done()
+
+        for hour in range(0, hours):
+            hass.states.async_set("sensor.energy", ENERGY_LIST[hour])
+            hass.states.async_set("sensor.electricity_price", hour)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+        state = hass.states.get("sensor.my_mock_es")
+        assert len(state.attributes[PRICES]) == rolling_hours
+        assert len(state.attributes[ENERGY]) == rolling_hours + 1
+        assert state.state == str(score)
+
+
+async def test_rolling_hours_default(hass: HomeAssistant) -> None:
+    """Test that the default rolling hours is 24"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", CONFIG)
+        await hass.async_block_till_done()
+
+        for hour in range(0, 36):
+            hass.states.async_set("sensor.energy", ENERGY_LIST[hour])
+            hass.states.async_set("sensor.electricity_price", hour)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+        state = hass.states.get("sensor.my_mock_es")
+        assert len(state.attributes[PRICES]) == 24
+
+
+async def test_rolling_hours_range_low(hass: HomeAssistant, caplog) -> None:
+    """Test rolling hours outside range"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["rolling_hours"] = 1
+    assert await async_setup_component(hass, "sensor", CONFIG)
+    assert (
+        "value must be at least 2 for dictionary value @ data['rolling_hours']. Got 1"
+        in caplog.text
+    )
+
+
+async def test_rolling_hours_range_high(hass: HomeAssistant, caplog) -> None:
+    """Test rolling hours outside range"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"]["rolling_hours"] = 170
+    assert await async_setup_component(hass, "sensor", CONFIG)
+    assert (
+        "value must be at most 168 for dictionary value @ data['rolling_hours']. Got 170"
+        in caplog.text
+    )
