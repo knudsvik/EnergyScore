@@ -106,10 +106,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         options_schema = vol.Schema(
             {
-                vol.Optional(
+                vol.Required(
                     CONF_TRESHOLD, default=self.current_options[CONF_TRESHOLD]
                 ): vol.Coerce(float),
-                vol.Optional(
+                vol.Required(
                     CONF_ROLLING_HOURS, default=self.current_options[CONF_ROLLING_HOURS]
                 ): vol.All(int, vol.Range(min=2, max=168)),
             }
