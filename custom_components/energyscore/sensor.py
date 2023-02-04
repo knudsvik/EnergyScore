@@ -234,20 +234,21 @@ class EnergyScore(SensorEntity, RestoreEntity):
         # Remove all energy usage below treshold:
         _energy_usage = {k: v for k, v in _energy_usage.items() if v >= self._treshold}
 
-        _LOGGER.debug(
-            "%s - Calc. energy usage: %s",
-            self._name,
-            [round(val, 2) for key, val in _energy_usage.items()],
-        )
-
         # Clean out old data:
         def cutoff(data: dict, hours: int) -> dict:
             """Cuts off old energy and price data"""
             cut_hours = now - datetime.timedelta(hours=hours)
             return {time: value for (time, value) in data.items() if time > cut_hours}
 
+        _energy_usage = cutoff(_energy_usage, self._rolling_hours)
         self.attr[PRICES] = cutoff(self.attr[PRICES], self._rolling_hours)
         self.attr[ENERGY] = cutoff(self.attr[ENERGY], self._rolling_hours + 1)
+
+        _LOGGER.debug(
+            "%s - Calculated energy usage: %s",
+            self._name,
+            [round(val, 2) for key, val in _energy_usage.items()],
+        )
 
         # Calculate quality and break out if applicable
         q = min(len(self.attr[PRICES]), len(_energy_usage)) / self._rolling_hours
