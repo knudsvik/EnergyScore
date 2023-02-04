@@ -49,13 +49,14 @@ CONFIG_SCHEMA = vol.Schema(
 class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """EnergyScore config flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Invoked when a user initiates a flow via the user interface."""
 
         if user_input is not None:
             self.data = user_input
+            self.options = {}
 
             # Create a unique ID:
             _unique_id = (
@@ -67,7 +68,13 @@ class EnergyScoreConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             self.data["unique_id"] = _unique_id
 
-            return self.async_create_entry(title=self.data["name"], data=self.data)
+            # Set the default options:
+            self.options[CONF_TRESHOLD] = 0
+            self.options[CONF_ROLLING_HOURS] = 24
+
+            return self.async_create_entry(
+                title=self.data["name"], data=self.data, options=self.options
+            )
 
         return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)
 
@@ -88,14 +95,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
         self.current_config: dict = dict(config_entry.data)
         self.current_options = dict(config_entry.options)
-
-        # TODO: Can the next two be set in the initial config step instead? Dont have to check anymore.
-        # It also makes the async_setup_entry much cleaner
-        # Check this with a print after current_options when setting options first time for new sensor.
-        if not CONF_TRESHOLD in self.current_options:
-            self.current_options[CONF_TRESHOLD] = 0
-        if not CONF_ROLLING_HOURS in self.current_options:
-            self.current_options[CONF_ROLLING_HOURS] = 24
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

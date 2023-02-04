@@ -64,10 +64,6 @@ async def async_setup_entry(
     config = hass.data[DOMAIN][config_entry.entry_id]
     energy_treshold = config_entry.options.get(CONF_TRESHOLD)
     rolling_hours = config_entry.options.get(CONF_ROLLING_HOURS)
-    if energy_treshold == None:
-        energy_treshold = 0
-    if rolling_hours == None:
-        rolling_hours = 24
     async_add_entities(
         [EnergyScore(hass, config, energy_treshold, rolling_hours)],
         update_before_add=False,
