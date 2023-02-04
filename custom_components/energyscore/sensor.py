@@ -26,6 +26,7 @@ import voluptuous as vol
 from .const import (
     CONF_ENERGY_ENTITY,
     CONF_PRICE_ENTITY,
+    CONF_ROLLING_HOURS,
     CONF_TRESHOLD,
     DOMAIN,
     ENERGY,
@@ -47,6 +48,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_TRESHOLD, default=0): vol.Coerce(float),
+        vol.Optional(CONF_ROLLING_HOURS, default=24): int,
     }
 )
 
@@ -61,10 +63,14 @@ async def async_setup_entry(
     # Reading the config from UI
     config = hass.data[DOMAIN][config_entry.entry_id]
     energy_treshold = config_entry.options.get(CONF_TRESHOLD)
+    rolling_hours = config_entry.options.get(CONF_ROLLING_HOURS)
     if energy_treshold == None:
         energy_treshold = 0
+    if rolling_hours == None:
+        rolling_hours = 24
     async_add_entities(
-        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+        [EnergyScore(hass, config, energy_treshold, rolling_hours)],
+        update_before_add=False,
     )
 
 
@@ -76,8 +82,10 @@ async def async_setup_platform(
 ) -> None:
     """Set up sensors from YAML config"""
     energy_treshold = config[CONF_TRESHOLD]
+    rolling_hours = config[CONF_ROLLING_HOURS]
     async_add_entities(
-        [EnergyScore(hass, config, energy_treshold)], update_before_add=False
+        [EnergyScore(hass, config, energy_treshold, rolling_hours)],
+        update_before_add=False,
     )
 
 
@@ -109,7 +117,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "%"
 
-    def __init__(self, hass, config, energy_treshold):
+    def __init__(self, hass, config, energy_treshold, rolling_hours):
         self._attr_icon: str = ICON
         self._attr_unique_id = config.get(CONF_UNIQUE_ID)
 
@@ -121,7 +129,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._norm_prices = np.array(None)
         self._price = None
         self._price_entity = config[CONF_PRICE_ENTITY]
-        self._rolling_hours = 24
+        self._rolling_hours = rolling_hours
         self._state = 100
         self._treshold = energy_treshold
         self.attr = {

@@ -19,7 +19,13 @@ from homeassistant.helpers.entity_registry import (
 )
 import voluptuous as vol
 
-from .const import CONF_ENERGY_ENTITY, CONF_PRICE_ENTITY, CONF_TRESHOLD, DOMAIN
+from .const import (
+    CONF_ENERGY_ENTITY,
+    CONF_PRICE_ENTITY,
+    CONF_ROLLING_HOURS,
+    CONF_TRESHOLD,
+    DOMAIN,
+)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -82,8 +88,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self.config_entry = config_entry
         self.current_config: dict = dict(config_entry.data)
         self.current_options = dict(config_entry.options)
+
+        # TODO: Can the next two be set in the initial config step instead? Dont have to check anymore.
+        # It also makes the async_setup_entry much cleaner
+        # Check this with a print after current_options when setting options first time for new sensor.
         if not CONF_TRESHOLD in self.current_options:
             self.current_options[CONF_TRESHOLD] = 0
+        if not CONF_ROLLING_HOURS in self.current_options:
+            self.current_options[CONF_ROLLING_HOURS] = 24
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -96,9 +108,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         options_schema = vol.Schema(
             {
                 vol.Optional(
-                    "energy_treshold",
-                    default=self.current_options[CONF_TRESHOLD],
-                ): vol.Coerce(float)
+                    CONF_TRESHOLD, default=self.current_options[CONF_TRESHOLD]
+                ): vol.Coerce(float),
+                vol.Optional(
+                    CONF_ROLLING_HOURS, default=self.current_options[CONF_ROLLING_HOURS]
+                ): int,
             }
         )
 
