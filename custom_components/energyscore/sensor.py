@@ -17,6 +17,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt
@@ -141,6 +142,15 @@ class EnergyScore(SensorEntity, RestoreEntity):
             PRICES: {},
             LAST_UPDATED: None,
         }
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info accosiated with the entity"""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._attr_unique_id)},
+            name=self.name,
+            manufacturer=DOMAIN,
+        )
 
     @property
     def name(self) -> str:
