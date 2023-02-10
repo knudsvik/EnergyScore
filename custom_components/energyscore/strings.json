@@ -19,11 +19,15 @@
         "step": {
             "init": {
                 "title": "Manage options",
+                "description": "See documentation for how these options affect the EnergyScore",
                 "data": {
-                    "energy_treshold": "Energy Treshold (default = 0)",
-                    "rolling_hours": "Rolling Hours (default = 24)"
+                    "energy_treshold": "Energy Treshold",
+                    "rolling_hours": "Rolling Hours"
                 },
-                "description": "See documentation for how these options affect the EnergyScore"
+                "data_description": {
+                    "energy_treshold": "Energy less than the treshold (during one hour) will not contribute to the EnergyScore. Default value = 0",
+                    "rolling_hours": "The period of time an EnergyScore should be scored on. Default value = 24 hours"
+                }
             }
         }
     }
