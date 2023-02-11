@@ -33,7 +33,7 @@ from .const import (
     PRICE_DICT,
     SAME_PRICE_DICT,
     VALID_CONFIG,
-    ENERGY_LIST,
+    TEST_PARAMS,
 )
 
 
@@ -84,18 +84,18 @@ async def test_update_sensor(hass: HomeAssistant, caplog) -> None:
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
 
-    STATES = [100, 100, 42]
+    STATES = [100, 100, 90]
     QUALITIES = [0, 0.04, 0.08]
-    ENERGY = [122.39, 124.49, 127.32]
-    PRICE = [0.99, 0.78, 1.54]
 
     with freeze_time(initial_datetime) as frozen_datetime:
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
 
         for hour in range(0, 3):
-            hass.states.async_set("sensor.energy", ENERGY[hour])
-            hass.states.async_set("sensor.electricity_price", PRICE[hour])
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             state = hass.states.get("sensor.my_mock_es")
@@ -231,8 +231,8 @@ async def test_restore(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("icon") == "mdi:speedometer"
 
 
-async def test_declining_energy_unsupported_state_classes(hass, caplog):
-    """Testing that energyscore handles energy sensors that declines with unsupported state classes"""
+async def test_declining_energy(hass, caplog):
+    """Testing that energyscore handles energy sensors that declines"""
 
     initial_datetime = dt.parse_datetime("2021-12-31 22:08:44-08:00")
 
@@ -240,82 +240,53 @@ async def test_declining_energy_unsupported_state_classes(hass, caplog):
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
 
-        # Initial update
-        hass.states.async_set("sensor.electricity_price", 1.2)
-        hass.states.async_set("sensor.energy", 30)
-        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-        await hass.async_block_till_done()
-
-        # Advance the time by one hour to get first score, ready for next hour
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-        hass.states.async_set("sensor.energy", 32)
-        hass.states.async_set("sensor.electricity_price", 1.6)
-        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-        await hass.async_block_till_done()
+        # Initial setup with three hours to get real score
+        for hour in [27, 28, 29]:
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "0"  # Intersection in most expensive hour
-        assert state.attributes.get("quality") == 0.04
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+        assert state.state == "62"
+        assert state.attributes.get("quality") == 0.08
 
         # Case state_class measurement
         hass.states.async_set(
             "sensor.energy",
-            2.2,
+            TEST_PARAMS[30]["energy"],
             attributes={
                 "state_class": sensor.SensorStateClass.MEASUREMENT,
             },
         )
-        hass.states.async_set("sensor.electricity_price", 2.6)
+        hass.states.async_set("sensor.electricity_price", TEST_PARAMS[30]["price"])
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "71"
-        assert state.attributes.get("quality") == 0.04
+        assert state.state == "81"
+        assert state.attributes.get("quality") == 0.08
         assert (
             "My Mock ES - The energy entity's state class is measurement. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
             in caplog.text
         )
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
-        # Case state_class None, adding a fresh hour first (last was None)
-        hass.states.async_set("sensor.energy", 1.8)
+        # Case state_class None, replacing data without state class first
+        hass.states.async_set("sensor.energy", TEST_PARAMS[30]["energy"])
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "37"
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-
-        hass.states.async_set("sensor.energy", 1.6)
-        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-        await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "37"
-        assert state.attributes.get("quality") == 0.08
+        assert state.state == "81"
         assert (
             "My Mock ES - The energy entity's state class is None. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
             in caplog.text
         )
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         # Case state_class total but no reset
-        # Adding a couple of fresh hours first (last was None)
-        hass.states.async_set("sensor.electricity_price", 0.18)
-        hour = 0
-        while True:
-            hass.states.async_set("sensor.energy", 10.12 + hour)
-            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-            await hass.async_block_till_done()
-            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-            hour += 1
-            if hour == 2:
-                break
-        state = hass.states.get("sensor.my_mock_es")
-        assert state.attributes.get("quality") == 0.17
-        assert state.state == "80"
-        # Now with total state_class but no reset
         hass.states.async_set(
             "sensor.energy",
-            2.2,
+            TEST_PARAMS[30]["energy"],
             attributes={
                 "state_class": sensor.SensorStateClass.TOTAL,
             },
@@ -323,57 +294,29 @@ async def test_declining_energy_unsupported_state_classes(hass, caplog):
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "80"
-        assert state.attributes.get("quality") == 0.17
+        assert state.state == "81"
+        assert state.attributes.get("quality") == 0.08
         assert (
             "My Mock ES - The energy entity's state class is total, but there is no last_reset attribute to confirm that the sensor is expected to decline the value."
             in caplog.text
         )
 
-
-async def test_declining_energy_supported_state_classes(hass):
-    """Testing that energyscore handles energy sensors that declines with supported state_classes"""
-
-    initial_datetime = dt.parse_datetime("2021-12-31 22:08:44-08:00")
-
-    with freeze_time(initial_datetime) as frozen_datetime:
-        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
-        await hass.async_block_till_done()
-
-        # Initial update
-        hass.states.async_set("sensor.electricity_price", 1.2)
-        hass.states.async_set("sensor.energy", 30)
-        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-        await hass.async_block_till_done()
-
-        # Advance the time by one hour to get first score, ready for next hour
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-        hass.states.async_set("sensor.energy", 32)
-        hass.states.async_set("sensor.electricity_price", 1.6)
-        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-        await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "0"  # Intersection in most expensive hour
-        assert state.attributes.get("quality") == 0.04
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-
         # Case state_class: total_increasing
-        hass.states.async_set("sensor.electricity_price", 1.4)
         hass.states.async_set(
             "sensor.energy",
-            3.2,
+            TEST_PARAMS[30]["energy"],
             attributes={"state_class": sensor.SensorStateClass.TOTAL_INCREASING},
         )
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "30"
-        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+        assert state.state == "32"
+        assert state.attributes.get("quality") == 0.12
 
         # Case state_class: total and last_reset
         hass.states.async_set(
             "sensor.energy",
-            0.8,
+            TEST_PARAMS[30]["energy"],
             attributes={
                 "state_class": sensor.SensorStateClass.TOTAL,
                 "last_reset": "2022-01-01 00:00:53-08:00",
@@ -382,7 +325,8 @@ async def test_declining_energy_supported_state_classes(hass):
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "33"
+        assert state.state == "32"
+        assert state.attributes.get("quality") == 0.12
 
 
 async def test_quality(hass: HomeAssistant) -> None:
@@ -395,8 +339,10 @@ async def test_quality(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(1, 27):
-            hass.states.async_set("sensor.energy", hour**2)
-            hass.states.async_set("sensor.electricity_price", 1 / hour)
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             state = hass.states.get("sensor.my_mock_es")
@@ -409,7 +355,9 @@ async def test_quality(hass: HomeAssistant) -> None:
         # Advance 10 minute slots to verify all parts of an hour:
         for part_hour in range(1, 6):
             frozen_datetime.tick(delta=datetime.timedelta(minutes=10))
-            hass.states.async_set("sensor.energy", 700 + part_hour)
+            hass.states.async_set(
+                "sensor.energy", TEST_PARAMS[hour]["energy"] + part_hour
+            )
             hass.states.async_set("sensor.electricity_price", part_hour)
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
@@ -421,9 +369,7 @@ async def test_energy_treshold(hass: HomeAssistant) -> None:
     """Test that the treshold function is working as intended"""
 
     CONFIG = copy.deepcopy(VALID_CONFIG)
-    CONFIG["sensor"]["energy_treshold"] = 0.8
-
-    energy = [1, 2, 3, 3.4, 3.5, 3.7, 4.1]
+    CONFIG["sensor"]["energy_treshold"] = 0.14
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
     with freeze_time(initial_datetime) as frozen_datetime:
@@ -431,18 +377,20 @@ async def test_energy_treshold(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(0, 7):
-            hass.states.async_set("sensor.energy", energy[hour])
-            hass.states.async_set("sensor.electricity_price", hour)
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         state = hass.states.get("sensor.my_mock_es")
-        assert state.state == "75"
-        assert state.attributes[QUALITY] == 0.08
+        assert state.state == "71"
+        assert state.attributes[QUALITY] == 0.17
 
 
-rolling_parameters = [(2, 5, 79), (4, 5, 72), (37, 40, 33)]
+rolling_parameters = [(3, 5, 76), (4, 10, 18), (37, 40, 60)]
 
 
 @pytest.mark.parametrize("rolling_hours, hours, score", rolling_parameters)
@@ -458,8 +406,14 @@ async def test_rolling_hours(hass: HomeAssistant, rolling_hours, hours, score) -
         await hass.async_block_till_done()
 
         for hour in range(0, hours):
-            hass.states.async_set("sensor.energy", ENERGY_LIST[hour])
-            hass.states.async_set("sensor.electricity_price", hour)
+            hass.states.async_set(
+                "sensor.energy",
+                TEST_PARAMS[hour]["energy"],
+                attributes={"state_class": sensor.SensorStateClass.TOTAL_INCREASING},
+            )
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
@@ -481,8 +435,14 @@ async def test_rolling_hours_default(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(0, 36):
-            hass.states.async_set("sensor.energy", ENERGY_LIST[hour])
-            hass.states.async_set("sensor.electricity_price", hour)
+            hass.states.async_set(
+                "sensor.energy",
+                TEST_PARAMS[hour]["energy"],
+                attributes={"state_class": sensor.SensorStateClass.TOTAL_INCREASING},
+            )
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
