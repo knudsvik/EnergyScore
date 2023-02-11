@@ -19,11 +19,15 @@
         "step": {
             "init": {
                 "title": "Alternativer",
+                "description": "Se dokumentasjon for forklaring på hvordan alternativene påvirker EnergyScore",
                 "data": {
-                    "energy_treshold": "Energigrense (standardverdi = 0)",
-                    "rolling_hours": "Periode i timer (standardverdi = 24)"
+                    "energy_treshold": "Energigrense",
+                    "rolling_hours": "Periode i timer"
                 },
-                "description": "Se dokumentasjon for forklaring på hvordan alternativene påvirker EnergyScore"
+                "data_description": {
+                    "energy_treshold": "Energi mindre enn grensen (i løpet av en time) bidrar ikke til EnergyScore. Standardverdi = 0",
+                    "rolling_hours": "Tidsperioden EnergyScore skal bli kalkulert over. Standardverdi = 24 timer"
+                }
             }
         }
     }
