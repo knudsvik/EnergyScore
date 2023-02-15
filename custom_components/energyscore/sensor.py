@@ -32,6 +32,8 @@ from .const import (
     DOMAIN,
     ENERGY,
     ICON,
+    ICON_COST,
+    ICON_SAVINGS,
     LAST_UPDATED,
     PRICES,
     QUALITY,
@@ -69,10 +71,13 @@ async def async_setup_entry(
     rolling_hours = config_entry.options.get(CONF_ROLLING_HOURS)
     _LOGGER.debug("Config: %s", config)
     _LOGGER.debug("Options: %s", config_entry.options)
-    async_add_entities(
-        [EnergyScore(hass, config, energy_treshold, rolling_hours)],
-        update_before_add=False,
-    )
+
+    sensors = [
+        EnergyScore(hass, config, energy_treshold, rolling_hours),
+        Cost(config),
+        PotentialSavings(config),
+    ]
+    async_add_entities(sensors, update_before_add=False)
 
 
 async def async_setup_platform(
@@ -296,6 +301,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
 
     async def async_update(self):
         """Updates the sensor"""
+
         try:
             self._price = self.hass.states.get(self._price_entity)
             self._energy = self.hass.states.get(self._energy_entity)
@@ -336,3 +342,106 @@ class EnergyScore(SensorEntity, RestoreEntity):
                     key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
                     for key, val in self.attr[ENERGY].items()
                 }
+
+
+class Cost(SensorEntity):
+    """Savings sensor class"""
+
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, config):
+        self._attr_icon: str = ICON_COST
+        self._attr_unique_id = f"{config.get(CONF_UNIQUE_ID)}_cost"
+
+        self._energy_entity = config[CONF_ENERGY_ENTITY]
+        self._name = f"{config[CONF_NAME]} Cost"
+        self._price_entity = config[CONF_PRICE_ENTITY]
+        self._state = 0
+        self.attr = {QUALITY: 0}
+        self.config = config
+        self.energy_usage = None
+        self.price = None
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info accosiated with the entity"""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.config.get(CONF_UNIQUE_ID))},
+            name=self.config[CONF_NAME],
+            manufacturer=DOMAIN,
+        )
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def state(self) -> Any:
+        """Return the state of the sensor."""
+        return self._state
+
+    @property
+    def extra_state_attributes(self):
+        return self.attr
+
+    async def async_update(self):
+        """Updates the sensor"""
+
+        _LOGGER.warning(" - - - The cost for %s are being updated - - -", self._name)
+
+        self.price = self.hass.states.get(self._price_entity)
+        self.energy_usage = self.hass.states.get(self._energy_entity)
+        if not self.price or not self.energy_usage:
+            return
+
+        try:
+            self._state = (
+                self.price.state * self.energy_usage.state
+            )  # denne er bare for første timen. Så skal den adderes.
+        except ValueError:
+            _LOGGER.exception(
+                "%s - Possibly non-numeric source state when calculating price",
+                self._name,
+            )
+
+
+class PotentialSavings(SensorEntity):
+    """Savings sensor class"""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, config):
+        self._attr_icon: str = ICON_SAVINGS
+        self._attr_unique_id = f"{config.get(CONF_UNIQUE_ID)}_potential_savings"
+        self._name = f"{config[CONF_NAME]} Potential Savings"
+        self._state = 0
+        self.config = config
+        self.attr = {QUALITY: 0}
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info accosiated with the entity"""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.config.get(CONF_UNIQUE_ID))},
+            name=self.config[CONF_NAME],
+            manufacturer=DOMAIN,
+        )
+
+    @property
+    def name(self) -> str:
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def state(self) -> Any:
+        """Return the state of the sensor."""
+        return self._state
+
+    @property
+    def extra_state_attributes(self):
+        return self.attr
+
+    async def async_update(self):
+        """Updates the sensor"""
+        _LOGGER.warning(" - - - The savings for %s are being updated - - -", self._name)

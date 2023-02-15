@@ -7,6 +7,7 @@ Inspiration from
 from unittest import mock
 
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.components.sensor import SensorStateClass
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.energyscore import config_flow
@@ -56,12 +57,34 @@ async def test_flow_creates_config_entry(hass):
     }
     assert result["context"]["unique_id"] == "ES_energy_ui_price_ui"
 
+    # EnergyScore
     state = hass.states.get("sensor.ui_energyscore")
+    assert state
     assert state.state == "100"
+    assert state.attributes.get("state_class") == SensorStateClass.MEASUREMENT
     assert state.attributes.get("energy_entity") == "sensor.energy_ui"
     assert state.attributes.get("price_entity") == "sensor.price_ui"
     assert state.attributes.get("friendly_name") == "UI EnergyScore"
+    assert state.attributes.get("quality") == 0
     assert state.attributes.get("icon") == "mdi:speedometer"
+
+    # Cost sensor
+    state = hass.states.get("sensor.ui_energyscore_cost")
+    assert state
+    assert state.state == "0"
+    assert state.attributes.get("state_class") == SensorStateClass.TOTAL_INCREASING
+    assert state.attributes.get("friendly_name") == "UI EnergyScore Cost"
+    assert state.attributes.get("quality") == 0
+    assert state.attributes.get("icon") == "mdi:currency-eur"
+
+    # Potential savings sensor
+    state = hass.states.get("sensor.ui_energyscore_potential_savings")
+    assert state
+    assert state.state == "0"
+    assert state.attributes.get("state_class") == SensorStateClass.MEASUREMENT
+    assert state.attributes.get("friendly_name") == "UI EnergyScore Potential Savings"
+    assert state.attributes.get("quality") == 0
+    assert state.attributes.get("icon") == "mdi:piggy-bank"
 
 
 async def test_options_flow_add_treshold(hass):
