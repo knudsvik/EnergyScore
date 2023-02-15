@@ -4,6 +4,8 @@ DOMAIN = "energyscore"
 
 # Icons
 ICON = "mdi:speedometer"
+ICON_COST = "mdi:currency-eur"
+ICON_SAVINGS = "mdi:piggy-bank"
 
 # Configuration and options
 CONF_PRICE_ENTITY = "price_entity"
