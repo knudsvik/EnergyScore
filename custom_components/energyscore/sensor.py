@@ -17,7 +17,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import DeviceInfo
+import homeassistant.helpers.entity_registry as er
+from homeassistant.helpers.entity import (
+    DeviceInfo,
+    get_capability,
+    get_supported_features,
+)
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt
@@ -34,6 +39,7 @@ from .const import (
     ICON,
     ICON_COST,
     ICON_SAVINGS,
+    LAST_ENERGY,
     LAST_UPDATED,
     PRICES,
     QUALITY,
@@ -74,8 +80,8 @@ async def async_setup_entry(
 
     sensors = [
         EnergyScore(hass, config, energy_treshold, rolling_hours),
-        Cost(config),
-        PotentialSavings(config),
+        Cost(hass, config),
+        PotentialSavings(hass, config),
     ]
     async_add_entities(sensors, update_before_add=False)
 
@@ -90,10 +96,11 @@ async def async_setup_platform(
     energy_treshold = config[CONF_TRESHOLD]
     rolling_hours = config[CONF_ROLLING_HOURS]
     _LOGGER.debug("Config: %s", config)
-    async_add_entities(
-        [EnergyScore(hass, config, energy_treshold, rolling_hours)],
-        update_before_add=False,
-    )
+    sensors = [
+        EnergyScore(hass, config, energy_treshold, rolling_hours),
+        Cost(hass, config),
+    ]
+    async_add_entities(sensors, update_before_add=False)
 
 
 def normalise_price(price_dict) -> dict:
@@ -116,6 +123,22 @@ def normalise_energy(energy_dict) -> dict:
         return {}
     sum_values = sum(energy_dict.values())
     return {key: value / sum_values for key, value in energy_dict.items()}
+
+
+def calculate_hourly_energy_usage(energy_dict: dict) -> dict:
+    """Calculate energy data per hour from total"""
+    energy_usage = {}
+    for key, value in energy_dict.items():
+        previous = key - datetime.timedelta(hours=1)
+        if previous in energy_dict and energy_dict[key] is not None:
+            # Check if the energy sensor is resetting
+            if energy_dict[previous] is None or (value < energy_dict[previous]):
+                energy_usage[key] = value
+            else:
+                energy_usage[key] = value - energy_dict[previous]
+        elif previous in energy_dict and energy_dict[key] is not None:
+            energy_usage[key] = value
+    return energy_usage
 
 
 class EnergyScore(SensorEntity, RestoreEntity):
@@ -236,20 +259,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self.attr[PRICES][now] = self._price.state
 
         # Calculate energy data per hour from total:
-        _energy_usage = {}
-        for key, value in self.attr[ENERGY].items():
-            previous = key - datetime.timedelta(hours=1)
-            if previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
-
-                # Check if the energy sensor is resetting
-                if self.attr[ENERGY][previous] is None or (
-                    value < self.attr[ENERGY][previous]
-                ):
-                    _energy_usage[key] = value
-                else:
-                    _energy_usage[key] = value - self.attr[ENERGY][previous]
-            elif previous in self.attr[ENERGY] and self.attr[ENERGY][key] is not None:
-                _energy_usage[key] = value
+        _energy_usage = calculate_hourly_energy_usage(self.attr[ENERGY])
 
         # Remove all energy usage below treshold:
         _energy_usage = {k: v for k, v in _energy_usage.items() if v >= self._treshold}
@@ -302,6 +312,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
     async def async_update(self):
         """Updates the sensor"""
 
+        # Below can be moved to an update handler
         try:
             self._price = self.hass.states.get(self._price_entity)
             self._energy = self.hass.states.get(self._energy_entity)
@@ -349,18 +360,24 @@ class Cost(SensorEntity):
 
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, config):
+    def __init__(self, hass: HomeAssistant, config):
         self._attr_icon: str = ICON_COST
         self._attr_unique_id = f"{config.get(CONF_UNIQUE_ID)}_cost"
-
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._name = f"{config[CONF_NAME]} Cost"
         self._price_entity = config[CONF_PRICE_ENTITY]
+        self._score_uid = config.get(CONF_UNIQUE_ID)
         self._state = 0
-        self.attr = {QUALITY: 0}
+        self.attr = {
+            QUALITY: 0,
+            LAST_ENERGY: {},
+            LAST_UPDATED: None,
+        }
         self.config = config
         self.energy_usage = None
+        self.hass = hass
         self.price = None
+        self.energy = None
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -385,25 +402,93 @@ class Cost(SensorEntity):
     def extra_state_attributes(self):
         return self.attr
 
+    def process_new_data(self):
+        """Processes the update data"""
+        now = dt.now()
+        # now = dt.now().replace(
+        #    minute=0, second=0, microsecond=0
+        # )  # TZ aware datetime obj based on user settings
+
+        # Parse datetimes from strings
+        self.attr[LAST_ENERGY] = {
+            dt.parse_datetime(key): value
+            for key, value in self.attr[LAST_ENERGY].items()
+            if isinstance(key, str)
+        }
+
+        # Add current energy
+        self.attr[LAST_ENERGY][now] = self.energy.state
+        _LOGGER.warning(
+            "Cost calc for %s - Last energy: %s", self.name, self.attr[LAST_ENERGY]
+        )
+
+        # Calculate energy usage
+        if len(self.attr[LAST_ENERGY]) == 2:
+            self.energy_usage = (
+                self.attr[LAST_ENERGY][max(self.attr[LAST_ENERGY])]
+                - self.attr[LAST_ENERGY][min(self.attr[LAST_ENERGY])]
+            )
+        _LOGGER.warning(
+            "Cost calc for %s - Energy usage: %s", self.name, self.energy_usage
+        )
+
+        if self.energy_usage is None:
+            return
+
+        cost = self.price.state * self.energy_usage
+
+        # Check new date
+        if min(self.attr[LAST_ENERGY]).date() != max(self.attr[LAST_ENERGY]).date():
+            self._state = round(cost, 2)
+        else:
+            self._state = round(self._state + cost, 2)
+
+        # Clean old data
+        self.attr[LAST_ENERGY] = {
+            time: value
+            for (time, value) in self.attr[LAST_ENERGY].items()
+            if time == now
+        }
+
+        return
+
     async def async_update(self):
         """Updates the sensor"""
 
-        _LOGGER.warning(" - - - The cost for %s are being updated - - -", self._name)
-
-        self.price = self.hass.states.get(self._price_entity)
-        self.energy_usage = self.hass.states.get(self._energy_entity)
-        if not self.price or not self.energy_usage:
-            return
-
+        _LOGGER.debug("The cost for %s are being updated", self._name)
         try:
-            self._state = (
-                self.price.state * self.energy_usage.state
-            )  # denne er bare for første timen. Så skal den adderes.
-        except ValueError:
-            _LOGGER.exception(
-                "%s - Possibly non-numeric source state when calculating price",
-                self._name,
+            self.price = self.hass.states.get(self._price_entity)
+            self.energy = self.hass.states.get(self._energy_entity)
+
+            if self.price.state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
+                _LOGGER.info("%s - Price data is %s", self._name, self.price.state)
+                self.price = False
+            if self.energy.state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
+                _LOGGER.info("%s - Energy data is %s", self._name, self.energy.state)
+                self.energy = False
+            if not self.price or not self.energy:
+                return
+
+            self.price.state = round(float(self.price.state), 2)
+            self.energy.state = round(float(self.energy.state), 2)
+            _LOGGER.warning(
+                "Cost calc for %s - Price and Energy: %s, %s",
+                self.name,
+                self.price.state,
+                self.energy.state,
             )
+
+        except ValueError:
+            _LOGGER.exception("%s - Possibly non-numeric source state", self._name)
+        else:
+            self.process_new_data()
+            _LOGGER.warning("Cost calc for %s - Cost: %s", self.name, self._state)
+
+            # Datatimes needs to be converted to strings in state attributes
+            self.attr[LAST_ENERGY] = {
+                key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
+                for key, val in self.attr[LAST_ENERGY].items()
+            }
 
 
 class PotentialSavings(SensorEntity):
@@ -411,9 +496,10 @@ class PotentialSavings(SensorEntity):
 
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, config):
+    def __init__(self, hass, config):
         self._attr_icon: str = ICON_SAVINGS
         self._attr_unique_id = f"{config.get(CONF_UNIQUE_ID)}_potential_savings"
+        self._hass = hass
         self._name = f"{config[CONF_NAME]} Potential Savings"
         self._state = 0
         self.config = config
@@ -444,4 +530,21 @@ class PotentialSavings(SensorEntity):
 
     async def async_update(self):
         """Updates the sensor"""
-        _LOGGER.warning(" - - - The savings for %s are being updated - - -", self._name)
+        _LOGGER.info(
+            " - - - The savings for %s are not being updated yet - - -", self._name
+        )
+
+        """
+        # Get EnergyScore entity
+        entity_reg = er.async_get(self._hass)
+        score_entity = entity_reg.async_get_entity_id("sensor", DOMAIN, self._score_uid)
+
+        # Fetch data
+        score = self.hass.states.get(score_entity)
+        total_energy = score.attributes.get(ENERGY)
+        prices = score.attributes.get(PRICES)
+
+        if score.state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
+            _LOGGER.info("%s - EnergyScore data is %s", self._name, score.state)
+            return
+        """

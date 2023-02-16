@@ -15,6 +15,7 @@ CONF_TRESHOLD = "energy_treshold"
 
 # Other
 ENERGY = "total_energy"
+LAST_ENERGY = "last_updated_energy"
 LAST_UPDATED = "last_updated"
 PRICES = "price"
 QUALITY = "quality"
