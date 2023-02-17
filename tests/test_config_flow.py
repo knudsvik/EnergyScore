@@ -74,7 +74,6 @@ async def test_flow_creates_config_entry(hass):
     assert state.state == "0"
     assert state.attributes.get("state_class") == SensorStateClass.TOTAL_INCREASING
     assert state.attributes.get("friendly_name") == "UI EnergyScore Cost"
-    assert state.attributes.get("quality") == 0
     assert state.attributes.get("icon") == "mdi:currency-eur"
 
     # Potential savings sensor

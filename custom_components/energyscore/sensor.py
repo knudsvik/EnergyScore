@@ -195,7 +195,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         return self.attr
 
     async def async_added_to_hass(self) -> None:
-        """ "Restore last state." """
+        """Restore last state"""
         _LOGGER.debug("Trying to restore: %s", self._name)
         await super().async_added_to_hass()
         if (
@@ -355,7 +355,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
                 }
 
 
-class Cost(SensorEntity):
+class Cost(SensorEntity, RestoreEntity):
     """Savings sensor class"""
 
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -366,10 +366,8 @@ class Cost(SensorEntity):
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._name = f"{config[CONF_NAME]} Cost"
         self._price_entity = config[CONF_PRICE_ENTITY]
-        self._score_uid = config.get(CONF_UNIQUE_ID)
         self._state = 0
         self.attr = {
-            QUALITY: 0,
             LAST_ENERGY: {},
             LAST_UPDATED: None,
         }
@@ -402,12 +400,26 @@ class Cost(SensorEntity):
     def extra_state_attributes(self):
         return self.attr
 
+    async def async_added_to_hass(self) -> None:
+        """Restore last state if same date"""
+        _LOGGER.debug("Trying to restore %s", self._name)
+        await super().async_added_to_hass()
+        if (
+            (last_state := await self.async_get_last_state())
+            and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE)
+            and last_state.attributes[LAST_UPDATED] is not None
+        ):
+            self.attr[LAST_UPDATED] = dt.parse_datetime(
+                last_state.attributes[LAST_UPDATED]
+            )
+            self.attr[LAST_ENERGY] = last_state.attributes[LAST_ENERGY]
+            if self.attr[LAST_UPDATED].date() == dt.now().date():
+                self._state = last_state.state
+                _LOGGER.debug("Restored %s", self._name)
+
     def process_new_data(self):
         """Processes the update data"""
         now = dt.now()
-        # now = dt.now().replace(
-        #    minute=0, second=0, microsecond=0
-        # )  # TZ aware datetime obj based on user settings
 
         # Parse datetimes from strings
         self.attr[LAST_ENERGY] = {
@@ -489,6 +501,7 @@ class Cost(SensorEntity):
                 key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
                 for key, val in self.attr[LAST_ENERGY].items()
             }
+            self.attr[LAST_UPDATED] = dt.now()
 
 
 class PotentialSavings(SensorEntity):
