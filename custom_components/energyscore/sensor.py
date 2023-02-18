@@ -414,7 +414,7 @@ class Cost(SensorEntity, RestoreEntity):
             )
             self.attr[LAST_ENERGY] = last_state.attributes[LAST_ENERGY]
             if self.attr[LAST_UPDATED].date() == dt.now().date():
-                self._state = last_state.state
+                self._state = float(last_state.state)
                 _LOGGER.debug("Restored %s", self._name)
 
     def process_new_data(self):
@@ -496,7 +496,7 @@ class Cost(SensorEntity, RestoreEntity):
             self.process_new_data()
             _LOGGER.warning("Cost calc for %s - Cost: %s", self.name, self._state)
 
-            # Datatimes needs to be converted to strings in state attributes
+            # Datetimes needs to be converted to strings in state attributes
             self.attr[LAST_ENERGY] = {
                 key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
                 for key, val in self.attr[LAST_ENERGY].items()

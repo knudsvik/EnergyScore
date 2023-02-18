@@ -226,7 +226,7 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
     stored_state = StoredState(
         State(
             "sensor.my_mock_es",
-            38,
+            "38",  # HA restores states as strings
             attributes={
                 "energy_entity": "sensor.restored_energy",
                 "price_entity": "sensor.restored_price",
@@ -274,7 +274,7 @@ async def test_restore_cost(hass: HomeAssistant, caplog) -> None:
     stored_state = StoredState(
         State(
             "sensor.my_mock_es_cost",
-            2.33,
+            "2.33",  # HA restores states as strings
             attributes={
                 "last_updated_energy": {"2022-09-18 11:10:44-07:00": 4.2},
                 "last_updated": now,
