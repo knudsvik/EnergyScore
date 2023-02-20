@@ -61,7 +61,7 @@ async def test_new_config(hass: HomeAssistant) -> None:
     # Cost sensor
     state = hass.states.get("sensor.my_mock_es_cost")
     assert state
-    assert state.state == "0"
+    assert state.state == "unknown"  # Init None
     assert state.attributes.get("quality") is None
     assert state.attributes.get("last_updated_energy") == {}
     assert state.attributes.get("icon") == "mdi:currency-eur"
@@ -147,7 +147,7 @@ async def test_update_cost_sensor(hass: HomeAssistant) -> None:
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44-07:00")
 
     # The cost should reset at midnight
-    COST = [0, 0.08, 0.23, 0.0, 0.22]
+    COST = ["unknown", 0.08, 0.23, 0.0, 0.22]
 
     with freeze_time(initial_datetime) as frozen_datetime:
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)

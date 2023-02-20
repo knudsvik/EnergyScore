@@ -71,7 +71,7 @@ async def test_flow_creates_config_entry(hass):
     # Cost sensor
     state = hass.states.get("sensor.ui_energyscore_cost")
     assert state
-    assert state.state == "0"
+    assert state.state == "unknown"
     assert state.attributes.get("state_class") == SensorStateClass.TOTAL_INCREASING
     assert state.attributes.get("friendly_name") == "UI EnergyScore Cost"
     assert state.attributes.get("icon") == "mdi:currency-eur"
@@ -79,10 +79,10 @@ async def test_flow_creates_config_entry(hass):
     # Potential savings sensor
     state = hass.states.get("sensor.ui_energyscore_potential_savings")
     assert state
-    assert state.state == "0"
+    assert state.state == "unknown"  # init: None
     assert state.attributes.get("state_class") == SensorStateClass.MEASUREMENT
     assert state.attributes.get("friendly_name") == "UI EnergyScore Potential Savings"
-    assert state.attributes.get("quality") == 0
+    assert state.attributes.get("quality") == None
     assert state.attributes.get("icon") == "mdi:piggy-bank"
 
 
