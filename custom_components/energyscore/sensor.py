@@ -103,6 +103,7 @@ async def async_setup_platform(
     sensors = [
         EnergyScore(hass, config, energy_treshold, rolling_hours),
         Cost(hass, config),
+        PotentialSavings(hass, config),
     ]
     async_add_entities(sensors, update_before_add=False)
 
@@ -527,11 +528,12 @@ class PotentialSavings(SensorEntity):
         self._name = f"{config[CONF_NAME]} Potential Savings"
         self._state = None
         self.attr = {
-            COST_MIN: None,
             COST_AVG: None,
+            COST_MIN: None,
             COST_MAX: None,
             ENERGY_TODAY: None,
             LAST_ENERGY: {},
+            LAST_UPDATED: None,
             PRICES: {},
             QUALITY: None,
         }
@@ -567,6 +569,42 @@ class PotentialSavings(SensorEntity):
     def extra_state_attributes(self):
         return self.attr
 
+    '''
+    async def async_added_to_hass(self) -> None:
+        """Restore last state if same date"""
+        _LOGGER.debug("Trying to restore %s", self._name)
+        await super().async_added_to_hass()
+        if (
+            (last_state := await self.async_get_last_state())
+            and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE)
+            and last_state.attributes[LAST_UPDATED] is not None
+        ):
+            self.attr[LAST_UPDATED] = dt.parse_datetime(
+                last_state.attributes[LAST_UPDATED]
+            )
+
+            if self.attr[LAST_UPDATED].date() == dt.now().date():
+                self._state = float(last_state.state)
+                for attribute in [
+                    COST_AVG,
+                    COST_MIN,
+                    COST_MAX,
+                    ENERGY_TODAY,
+                    LAST_ENERGY,
+                    LAST_UPDATED,
+                    PRICES,
+                    QUALITY,
+                ]:
+                    if attribute in last_state.attributes:
+                        self.attr[attribute] = last_state.attributes[attribute]
+            for i in [LAST_ENERGY, PRICES]:
+                self.attr[i] = {
+                    dt.parse_datetime(key): value
+                    for key, value in self.attr[i].items()
+                    if isinstance(key, str)
+                }
+            _LOGGER.debug("Restored %s", self._name) '''
+
     def process_new_data(self):
         """Processes the update data"""
         # Fist part similar to cost sensor. Simplify?
@@ -585,22 +623,6 @@ class PotentialSavings(SensorEntity):
                 }
         """
 
-        # Calculate energy usage
-        _LOGGER.warning(" - Last energy before update: %s", self.attr[LAST_ENERGY])
-        self.attr[LAST_ENERGY][now] = self.energy.state
-        _LOGGER.warning(" - Last energy after update: %s", self.attr[LAST_ENERGY])
-        energy_usage = calculate_energy_usage(self.attr[LAST_ENERGY])
-        _LOGGER.warning(" - Energy usage: %s", energy_usage)
-        if energy_usage is None:
-            return
-        if (
-            min(self.attr[LAST_ENERGY]).date() != max(self.attr[LAST_ENERGY]).date()
-            or self.attr[ENERGY_TODAY] is None
-        ):
-            self.attr[ENERGY_TODAY] = round(energy_usage, 2)
-        else:
-            self.attr[ENERGY_TODAY] = round(self.attr[ENERGY_TODAY] + energy_usage, 2)
-
         # Find current day prices
         self.attr[PRICES][
             now.replace(minute=0, second=0, microsecond=0)
@@ -611,21 +633,44 @@ class PotentialSavings(SensorEntity):
             if time.date() == now.date()
         }
         _LOGGER.warning(" - Prices: %s", self.attr[PRICES])
-        if len(self.attr[PRICES]) == 0:
-            return
 
-        self.attr[COST_AVG] = (
+        # Calculate energy usage
+        _LOGGER.warning(" - Last energy before update: %s", self.attr[LAST_ENERGY])
+        self.attr[LAST_ENERGY][now] = self.energy.state
+        _LOGGER.warning(" - Last energy after update: %s", self.attr[LAST_ENERGY])
+        energy_usage = calculate_energy_usage(self.attr[LAST_ENERGY])
+        _LOGGER.warning(" - Energy usage: %s", energy_usage)
+        if energy_usage is None or len(self.attr[PRICES]) == 0:
+            return
+        if (
+            min(self.attr[LAST_ENERGY]).date() != max(self.attr[LAST_ENERGY]).date()
+            or self.attr[ENERGY_TODAY] is None
+        ):
+            self.attr[ENERGY_TODAY] = round(energy_usage, 2)
+        else:
+            self.attr[ENERGY_TODAY] = round(self.attr[ENERGY_TODAY] + energy_usage, 2)
+
+        # Calculate costs
+        self.attr[COST_AVG] = round(
             sum(self.attr[PRICES].values())
             / len(self.attr[PRICES].values())
-            * energy_usage
+            * self.attr[ENERGY_TODAY],
+            2,
         )
-        self.attr[COST_MIN] = min(self.attr[PRICES].values()) * energy_usage
-        self.attr[COST_MAX] = max(self.attr[PRICES].values()) * energy_usage
-        print(f"Minimum cost: {self.attr[COST_MIN]}")
+        self.attr[COST_MIN] = round(
+            min(self.attr[PRICES].values()) * self.attr[ENERGY_TODAY], 2
+        )
+        self.attr[COST_MAX] = round(
+            max(self.attr[PRICES].values()) * self.attr[ENERGY_TODAY], 2
+        )
+
+        print(f"Total cost: {self.cost.state}")
+        print(f"Average cost: {self.attr[COST_AVG]}")
         print(f"Maximum cost: {self.attr[COST_MAX]}")
+        print(f"Minimum cost: {self.attr[COST_MIN]}")
 
         # Compare min and actual cost to get potential
-        self._state = self.cost.state - self.attr[COST_MIN]
+        self._state = round(self.cost.state - self.attr[COST_MIN], 2)
         print(f"Potential: {self._state}")
 
         # Clean old data
@@ -653,9 +698,10 @@ class PotentialSavings(SensorEntity):
             for sensor in [self.cost, self.energy, self.price]:
                 if sensor.state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
                     _LOGGER.info(
-                        "%s - Potential data cannot be updated, state is %s",
+                        "%s - Potential data cannot be updated, state is %s for %s",
                         self.name,
                         sensor.state,
+                        sensor,
                     )
                     return
                 sensor.state = float(sensor.state)
@@ -665,3 +711,4 @@ class PotentialSavings(SensorEntity):
 
         else:
             self.process_new_data()
+            # self.attr[LAST_UPDATED] = dt.now()
