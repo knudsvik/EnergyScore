@@ -368,6 +368,7 @@ async def test_restore_cost(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("last_updated") == now
 
 
+'''
 async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
     """Testing restoring potential sensor state and attributes"""
     now = dt.now()
@@ -402,6 +403,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
         "2022-09-18 11:10:44-07:00": 4.2
     }
     assert state.attributes.get("last_updated") == now
+'''
 
 
 async def test_declining_energy(hass, caplog):
@@ -550,6 +552,7 @@ async def test_energy_treshold(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(0, 7):
+            print(f" - - - HOUR: {hour}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour]["price"]

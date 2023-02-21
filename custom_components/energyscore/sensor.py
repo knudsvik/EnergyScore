@@ -516,7 +516,7 @@ class Cost(SensorEntity, RestoreEntity):
             self.attr[LAST_UPDATED] = dt.now()
 
 
-class PotentialSavings(SensorEntity):
+class PotentialSavings(SensorEntity, RestoreEntity):
     """Current day savings sensor class"""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -569,7 +569,6 @@ class PotentialSavings(SensorEntity):
     def extra_state_attributes(self):
         return self.attr
 
-    '''
     async def async_added_to_hass(self) -> None:
         """Restore last state if same date"""
         _LOGGER.debug("Trying to restore %s", self._name)
@@ -591,7 +590,6 @@ class PotentialSavings(SensorEntity):
                     COST_MAX,
                     ENERGY_TODAY,
                     LAST_ENERGY,
-                    LAST_UPDATED,
                     PRICES,
                     QUALITY,
                 ]:
@@ -603,7 +601,7 @@ class PotentialSavings(SensorEntity):
                     for key, value in self.attr[i].items()
                     if isinstance(key, str)
                 }
-            _LOGGER.debug("Restored %s", self._name) '''
+            _LOGGER.debug("Restored %s", self._name)
 
     def process_new_data(self):
         """Processes the update data"""
@@ -611,7 +609,7 @@ class PotentialSavings(SensorEntity):
 
         now = dt.now()
 
-        """
+        # TODO? This next part failed in prod, runs now in test after converting datetimes to strings in the end
         _LOGGER.warning(" - Last energy before parsing: %s", self.attr[LAST_ENERGY])
         # Parse datetimes from strings
         for i in [LAST_ENERGY, PRICES]:
@@ -621,7 +619,6 @@ class PotentialSavings(SensorEntity):
                     for key, value in self.attr[i].items()
                     if isinstance(key, str)
                 }
-        """
 
         # Find current day prices
         self.attr[PRICES][
@@ -711,4 +708,15 @@ class PotentialSavings(SensorEntity):
 
         else:
             self.process_new_data()
+
+            # Datetimes needs to be converted to strings in state attributes
+            self.attr[LAST_ENERGY] = {
+                key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
+                for key, val in self.attr[LAST_ENERGY].items()
+            }
+
+            self.attr[PRICES] = {
+                key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
+                for key, val in self.attr[PRICES].items()
+            }
             # self.attr[LAST_UPDATED] = dt.now()

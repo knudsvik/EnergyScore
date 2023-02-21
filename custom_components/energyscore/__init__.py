@@ -11,7 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, CONF_ROLLING_HOURS, CONF_TRESHOLD
+from .const import CONF_ROLLING_HOURS, CONF_TRESHOLD, DOMAIN
 
 PLATFORMS = [Platform.SENSOR]
 
