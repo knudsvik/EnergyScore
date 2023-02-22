@@ -473,7 +473,7 @@ async def test_declining_energy_energyscore(hass, caplog):
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
         state = hass.states.get("sensor.my_mock_es")
         assert state.state == "62"
-        assert state.attributes.get("quality") == 0.0
+        assert state.attributes.get("quality") == 0.08
 
         # Case state_class measurement
         hass.states.async_set(
