@@ -551,8 +551,8 @@ async def test_declining_energy_energyscore(hass, caplog):
         assert state.attributes.get("quality") == 0.12
 
 
-async def test_quality(hass: HomeAssistant) -> None:
-    """Test that the quality attribute is behaving correctly"""
+async def test_quality_energyscore(hass: HomeAssistant) -> None:
+    """Test that the quality attribute is behaving correctly for EnergyScore"""
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
 
