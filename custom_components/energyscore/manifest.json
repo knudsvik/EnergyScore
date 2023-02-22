@@ -1,10 +1,10 @@
 {
+  "domain": "energyscore",
+  "name": "EnergyScore",
   "config_flow": true,
   "codeowners": [
     "@knudsvik"
   ],
-  "domain": "energyscore",
-  "name": "EnergyScore",
   "documentation": "https://github.com/knudsvik/energyscore",
   "integration_type": "device",
   "iot_class": "calculated",
