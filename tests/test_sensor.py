@@ -368,21 +368,27 @@ async def test_restore_cost(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("last_updated") == now
 
 
-'''
 async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
     """Testing restoring potential sensor state and attributes"""
     now = dt.now()
+    now_str = now.strftime("%Y-%m-%dT%H:%M:%S%z")
     stored_state = StoredState(
         State(
-            "sensor.my_mock_es_cost",
-            "2.33",  # HA restores states as strings
+            "sensor.my_mock_es_potential_savings",
+            "3.33",  # HA restores states as strings
             attributes={
-                "last_updated_energy": {"2022-09-18 11:10:44-07:00": 4.2},
-                "last_updated": now,
+                "average_cost": 1.13,
+                "maximum_cost": 5.34,
+                "minimum_cost": 0.23,
+                "energy_today": 13.1,
+                "last_updated_energy": {"2022-09-18T11:10:44-07:00": 4.2},
+                "last_updated": now_str,
+                "price": {"2022-09-18T13:00:00-0700": 0.99},
+                "quality": 0.76,
             },
         ),
         None,
-        dt.now(),
+        dt.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
     )
 
     data = await RestoreStateData.async_get_instance(hass)
@@ -394,16 +400,22 @@ async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
 
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
-    assert "Restored My Mock ES Cost" in caplog.text
+    assert "Restored My Mock ES Potential Savings" in caplog.text
 
     # Assert restored data
-    state = hass.states.get("sensor.my_mock_es_cost")
-    assert state.state == "2.33"
+    state = hass.states.get("sensor.my_mock_es_potential_savings")
+    assert state.state == "3.33"
+    assert state.attributes.get("average_cost") == 1.13
+    assert state.attributes.get("maximum_cost") == 5.34
+    assert state.attributes.get("minimum_cost") == 0.23
+    assert state.attributes.get("energy_today") == 13.1
+    assert state.attributes.get("quality") == 0.76
+
     assert state.attributes.get("last_updated_energy") == {
-        "2022-09-18 11:10:44-07:00": 4.2
+        "2022-09-18T11:10:44-07:00": 4.2
     }
-    assert state.attributes.get("last_updated") == now
-'''
+    assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
+    assert state.attributes.get("last_updated").strftime("%Y-%m-%dT%H:%M:%S%z") == now_str
 
 
 async def test_declining_energy(hass, caplog):

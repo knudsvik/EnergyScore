@@ -595,12 +595,6 @@ class PotentialSavings(SensorEntity, RestoreEntity):
                 ]:
                     if attribute in last_state.attributes:
                         self.attr[attribute] = last_state.attributes[attribute]
-            for i in [LAST_ENERGY, PRICES]:
-                self.attr[i] = {
-                    dt.parse_datetime(key): value
-                    for key, value in self.attr[i].items()
-                    if isinstance(key, str)
-                }
             _LOGGER.debug("Restored %s", self._name)
 
     def process_new_data(self):
@@ -719,4 +713,5 @@ class PotentialSavings(SensorEntity, RestoreEntity):
                 key.strftime("%Y-%m-%dT%H:%M:%S%z"): val
                 for key, val in self.attr[PRICES].items()
             }
-            # self.attr[LAST_UPDATED] = dt.now()
+
+            self.attr[LAST_UPDATED] = dt.now().strftime("%Y-%m-%dT%H:%M:%S%z")
