@@ -604,7 +604,6 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         now = dt.now()
 
         # TODO? This next part failed in prod, runs now in test after converting datetimes to strings in the end
-        _LOGGER.warning(" - Last energy before parsing: %s", self.attr[LAST_ENERGY])
         # Parse datetimes from strings
         for i in [LAST_ENERGY, PRICES]:
             if self.attr[i] is not None:
@@ -623,7 +622,6 @@ class PotentialSavings(SensorEntity, RestoreEntity):
             for (time, value) in self.attr[PRICES].items()
             if time.date() == now.date()
         }
-        _LOGGER.warning(" - Prices: %s", self.attr[PRICES])
 
         # Calculate energy usage
         _LOGGER.warning(" - Last energy before update: %s", self.attr[LAST_ENERGY])
@@ -655,14 +653,12 @@ class PotentialSavings(SensorEntity, RestoreEntity):
             max(self.attr[PRICES].values()) * self.attr[ENERGY_TODAY], 2
         )
 
-        print(f"Total cost: {self.cost.state}")
-        print(f"Average cost: {self.attr[COST_AVG]}")
-        print(f"Maximum cost: {self.attr[COST_MAX]}")
-        print(f"Minimum cost: {self.attr[COST_MIN]}")
+        print(f"Avg cost {self.attr[COST_AVG]}")
+        print(f"Max cost {self.attr[COST_MAX]}")
+        print(f"Min cost {self.attr[COST_MIN]}")
 
         # Compare min and actual cost to get potential
         self._state = round(self.cost.state - self.attr[COST_MIN], 2)
-        print(f"Potential: {self._state}")
 
         # Clean old data
         self.attr[LAST_ENERGY] = {

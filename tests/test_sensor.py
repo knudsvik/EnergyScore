@@ -171,16 +171,29 @@ async def test_update_cost_sensor(hass: HomeAssistant) -> None:
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44-07:00")
 
     # The cost should reset at midnight
-    COST = ["unknown", 0.08, 0.23, 0.0, 0.22]
+    COST = ["unknown", 0.08, 0.23, 0.0, 0.22, 5.64, 7.27, 8.19]
 
     with freeze_time(initial_datetime) as frozen_datetime:
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
 
-        for hour in range(0, 4):
+        for hour in range(0, 5):
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            state = hass.states.get("sensor.my_mock_es_cost")
+            assert state.state == str(COST[hour])
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+        # Testing resetting energy sensors (hour 30 is resetting):
+        for hour in [5, 6, 7]:
+            print(f" - - - HOUR: {hour + 24}")
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour + 24]["energy"])
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour + 24]["price"]
             )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
@@ -196,9 +209,9 @@ async def test_update_savings_sensor(hass: HomeAssistant) -> None:
 
     # Since they are async, can't know which sensor updates first, so hardcoding cost
     # Last reading after midnight to check reseting
-    COST = [0, 0.08, 0.23, 0.23, 0.45, 0.18]
+    COST = [0, 0.08, 0.23, 0.23, 0.45, 0.18, 5.44, 7.08, 7.99]
 
-    # The savings should reset at midnight
+    # The savings should reset at midnight (hour 5)
     RESULT = [
         {"avg": None, "max": None, "min": None, "potential": "unknown"},
         {"avg": 0.2, "max": 0.32, "min": 0.08, "potential": 0.0},
@@ -206,17 +219,37 @@ async def test_update_savings_sensor(hass: HomeAssistant) -> None:
         {"avg": 0.43, "max": 0.72, "min": 0.18, "potential": 0.05},
         {"avg": 0.66, "max": 1.12, "min": 0.28, "potential": 0.17},
         {"avg": 0.18, "max": 0.18, "min": 0.18, "potential": 0.0},
+        {"avg": 5.77, "max": 6.12, "min": 5.42, "potential": 0.02},
+        {"avg": 10.94, "max": 20.26, "min": 5.9, "potential": 1.18},
+        {"avg": 15.37, "max": 27.53, "min": 6.1, "potential": 1.89},
     ]
 
     with freeze_time(initial_datetime) as frozen_datetime:
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
 
-        for hour in range(0, 5):
+        for hour in range(0, 6):
             print(f" - - - HOUR: {hour}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
+            hass.states.async_set("sensor.my_mock_es_cost", COST[hour])
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            state = hass.states.get("sensor.my_mock_es_potential_savings")
+            assert state.state == str(RESULT[hour]["potential"])
+            assert state.attributes.get("average_cost") == RESULT[hour]["avg"]
+            assert state.attributes.get("maximum_cost") == RESULT[hour]["max"]
+            assert state.attributes.get("minimum_cost") == RESULT[hour]["min"]
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+        # Testing resetting energy sensors (hour 30 is resetting):
+        for hour in [6, 7, 8]:
+            print(f" - - - HOUR: {hour + 23}")
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour + 23]["energy"])
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour + 23]["price"]
             )
             hass.states.async_set("sensor.my_mock_es_cost", COST[hour])
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
@@ -415,10 +448,12 @@ async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
         "2022-09-18T11:10:44-07:00": 4.2
     }
     assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
-    assert state.attributes.get("last_updated").strftime("%Y-%m-%dT%H:%M:%S%z") == now_str
+    assert (
+        state.attributes.get("last_updated").strftime("%Y-%m-%dT%H:%M:%S%z") == now_str
+    )
 
 
-async def test_declining_energy(hass, caplog):
+async def test_declining_energy_energyscore(hass, caplog):
     """Testing that energyscore handles energy sensors that declines"""
 
     initial_datetime = dt.parse_datetime("2021-12-31 22:08:44-08:00")
@@ -438,7 +473,7 @@ async def test_declining_energy(hass, caplog):
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
         state = hass.states.get("sensor.my_mock_es")
         assert state.state == "62"
-        assert state.attributes.get("quality") == 0.08
+        assert state.attributes.get("quality") == 0.0
 
         # Case state_class measurement
         hass.states.async_set(
