@@ -387,10 +387,7 @@ class Cost(SensorEntity, RestoreEntity):
         self._name = f"{config[CONF_NAME]} Cost"
         self._price_entity = config[CONF_PRICE_ENTITY]
         self._state = None
-        self.attr = {
-            LAST_ENERGY: {},
-            LAST_UPDATED: None,
-        }
+        self.attr = {LAST_ENERGY: {}, LAST_UPDATED: None}
         self.config = config
         self.energy_usage = None
         self.hass = hass
@@ -435,6 +432,7 @@ class Cost(SensorEntity, RestoreEntity):
             self.attr[LAST_ENERGY] = last_state.attributes[LAST_ENERGY]
             if self.attr[LAST_UPDATED].date() == dt.now().date():
                 self._state = float(last_state.state)
+                # TODO: Add quality and possibly others
                 _LOGGER.debug("Restored %s", self._name)
 
     def process_new_data(self):
@@ -624,11 +622,8 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         }
 
         # Calculate energy usage
-        _LOGGER.warning(" - Last energy before update: %s", self.attr[LAST_ENERGY])
         self.attr[LAST_ENERGY][now] = self.energy.state
-        _LOGGER.warning(" - Last energy after update: %s", self.attr[LAST_ENERGY])
         energy_usage = calculate_energy_usage(self.attr[LAST_ENERGY])
-        _LOGGER.warning(" - Energy usage: %s", energy_usage)
         if energy_usage is None or len(self.attr[PRICES]) == 0:
             return
         if (
@@ -653,12 +648,11 @@ class PotentialSavings(SensorEntity, RestoreEntity):
             max(self.attr[PRICES].values()) * self.attr[ENERGY_TODAY], 2
         )
 
-        print(f"Avg cost {self.attr[COST_AVG]}")
-        print(f"Max cost {self.attr[COST_MAX]}")
-        print(f"Min cost {self.attr[COST_MIN]}")
-
         # Compare min and actual cost to get potential
         self._state = round(self.cost.state - self.attr[COST_MIN], 2)
+
+        # Calculate quality
+        self.attr[QUALITY] = round(len(self.attr[PRICES]) / (now.hour + 1), 2)
 
         # Clean old data
         self.attr[LAST_ENERGY] = {

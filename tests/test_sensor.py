@@ -46,6 +46,7 @@ async def test_new_config(hass: HomeAssistant) -> None:
     state = hass.states.get("sensor.my_mock_es")
     assert state
     assert state.state == "100"
+    assert len(state.attributes) == 10
     assert state.attributes.get("unit_of_measurement") == "%"
     assert state.attributes.get("state_class") == sensor.SensorStateClass.MEASUREMENT
     assert state.attributes.get("energy_entity") == "sensor.energy"
@@ -54,7 +55,6 @@ async def test_new_config(hass: HomeAssistant) -> None:
     assert state.attributes.get("total_energy") == {}
     assert state.attributes.get("price") == {}
     assert state.attributes.get("last_updated") is None
-    assert state.attributes.get("unit_of_measurement") == "%"
     assert state.attributes.get("icon") == "mdi:speedometer"
     assert state.attributes.get("friendly_name") == "My Mock ES"
 
@@ -62,10 +62,10 @@ async def test_new_config(hass: HomeAssistant) -> None:
     state = hass.states.get("sensor.my_mock_es_cost")
     assert state
     assert state.state == "unknown"  # Init None
+    assert len(state.attributes) == 5
     assert (
         state.attributes.get("state_class") == sensor.SensorStateClass.TOTAL_INCREASING
     )
-    assert state.attributes.get("quality") is None
     assert state.attributes.get("last_updated_energy") == {}
     assert state.attributes.get("icon") == "mdi:currency-eur"
     assert state.attributes.get("last_updated") is None
@@ -75,6 +75,7 @@ async def test_new_config(hass: HomeAssistant) -> None:
     state = hass.states.get("sensor.my_mock_es_potential_savings")
     assert state
     assert state.state == "unknown"
+    assert len(state.attributes) == 11
     assert state.attributes.get("state_class") == sensor.SensorStateClass.MEASUREMENT
     assert state.attributes.get("icon") == "mdi:piggy-bank"
     assert state.attributes.get("average_cost") == None
@@ -82,8 +83,10 @@ async def test_new_config(hass: HomeAssistant) -> None:
     assert state.attributes.get("minimum_cost") == None
     assert state.attributes.get("energy_today") == None
     assert state.attributes.get("last_updated_energy") == {}
+    assert state.attributes.get("last_updated") is None
     assert state.attributes.get("price") == {}
     assert state.attributes.get("quality") is None
+    assert state.attributes.get("friendly_name") == "My Mock ES Potential Savings"
 
 
 async def test_unique_id(hass: HomeAssistant) -> None:
@@ -190,7 +193,6 @@ async def test_update_cost_sensor(hass: HomeAssistant) -> None:
 
         # Testing resetting energy sensors (hour 30 is resetting):
         for hour in [5, 6, 7]:
-            print(f" - - - HOUR: {hour + 24}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour + 24]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour + 24]["price"]
@@ -229,7 +231,6 @@ async def test_update_savings_sensor(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(0, 6):
-            print(f" - - - HOUR: {hour}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour]["price"]
@@ -246,7 +247,6 @@ async def test_update_savings_sensor(hass: HomeAssistant) -> None:
 
         # Testing resetting energy sensors (hour 30 is resetting):
         for hour in [6, 7, 8]:
-            print(f" - - - HOUR: {hour + 23}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour + 23]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour + 23]["price"]
@@ -587,6 +587,35 @@ async def test_quality_energyscore(hass: HomeAssistant) -> None:
             assert state.attributes[QUALITY] == 1
 
 
+async def test_quality_potential_savings(hass: HomeAssistant) -> None:
+    """Test that the quality attribute is behaving correctly for Potential sensor"""
+
+    initial_datetime = dt.parse_datetime("2022-09-18 20:08:44-07:00")
+
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+        await hass.async_block_till_done()
+
+        for hour in range(0, 30):
+            hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
+            hass.states.async_set(
+                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+            )
+            hass.states.async_set("sensor.my_mock_es_cost", hour)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            state = hass.states.get("sensor.my_mock_es_potential_savings")
+            if hour == 0:
+                assert state.attributes[QUALITY] == None
+            elif 1 <= hour < 4:  # To midnight
+                assert state.attributes[QUALITY] == round(
+                    (hour + 1) / (dt.now().hour + 1), 2
+                )
+            else:
+                assert state.attributes[QUALITY] == 1
+            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+
+
 async def test_energy_treshold(hass: HomeAssistant) -> None:
     """Test that the treshold function is working as intended"""
 
@@ -599,7 +628,6 @@ async def test_energy_treshold(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(0, 7):
-            print(f" - - - HOUR: {hour}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour]["price"]
