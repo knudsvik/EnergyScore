@@ -17,12 +17,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
-import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.entity import (
     DeviceInfo,
     get_capability,
     get_supported_features,
 )
+import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt
@@ -432,7 +432,6 @@ class Cost(SensorEntity, RestoreEntity):
             self.attr[LAST_ENERGY] = last_state.attributes[LAST_ENERGY]
             if self.attr[LAST_UPDATED].date() == dt.now().date():
                 self._state = float(last_state.state)
-                # TODO: Add quality and possibly others
                 _LOGGER.debug("Restored %s", self._name)
 
     def process_new_data(self):
@@ -503,6 +502,8 @@ class Cost(SensorEntity, RestoreEntity):
 
         except ValueError:
             _LOGGER.exception("%s - Possibly non-numeric source state", self._name)
+        except Exception:
+            _LOGGER.exception("%s - Could not fetch price and energy data", self._name)
         else:
             self.process_new_data()
 
@@ -682,14 +683,13 @@ class PotentialSavings(SensorEntity, RestoreEntity):
                         "%s - Potential data cannot be updated, state is %s for %s",
                         self.name,
                         sensor.state,
-                        sensor,
+                        sensor.entity_id,
                     )
                     return
                 sensor.state = float(sensor.state)
 
         except ValueError:
             _LOGGER.exception("%s - Possibly non-numeric source state", self._name)
-
         else:
             self.process_new_data()
 

@@ -270,18 +270,31 @@ async def test_unavailable_sources(hass: HomeAssistant, caplog) -> None:
     for state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
         hass.states.async_set("sensor.energy", 24321.4)
         hass.states.async_set("sensor.electricity_price", state)
+        hass.states.async_set("sensor.my_mock_es_cost", 23.2)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         assert f"My Mock ES - Price data is {state}" in caplog.text
+        assert f"My Mock ES Cost - Price data is {state}" in caplog.text
+        assert f"Potential data cannot be updated, state is {state}" in caplog.text
 
         hass.states.async_set("sensor.energy", state)
         hass.states.async_set("sensor.electricity_price", 0.42)
+        hass.states.async_set("sensor.my_mock_es_cost", 23.2)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         assert f"My Mock ES - Energy data is {state}" in caplog.text
+        assert f"My Mock ES Cost - Energy data is {state}" in caplog.text
+        assert f"Potential data cannot be updated, state is {state}" in caplog.text
+
+        hass.states.async_set("sensor.energy", 24321.4)
+        hass.states.async_set("sensor.electricity_price", 0.42)
+        hass.states.async_set("sensor.my_mock_es_cost", state)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+        assert f"Potential data cannot be updated, state is {state}" in caplog.text
 
 
-async def test_both_sources_unavailable(hass: HomeAssistant, caplog) -> None:
+async def test_all_sources_unavailable(hass: HomeAssistant, caplog) -> None:
     """Testing if both sources are unavailable or unknown (new caplog)"""
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
@@ -289,10 +302,14 @@ async def test_both_sources_unavailable(hass: HomeAssistant, caplog) -> None:
     for state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
         hass.states.async_set("sensor.energy", state)
         hass.states.async_set("sensor.electricity_price", state)
+        hass.states.async_set("sensor.my_mock_es_cost", state)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
         assert f"My Mock ES - Energy data is {state}" in caplog.text
         assert f"My Mock ES - Price data is {state}" in caplog.text
+        assert f"My Mock ES Cost - Energy data is {state}" in caplog.text
+        assert f"My Mock ES Cost - Price data is {state}" in caplog.text
+        assert f"Potential data cannot be updated, state is {state}" in caplog.text
 
 
 async def test_no_sources(hass: HomeAssistant, caplog) -> None:
@@ -301,7 +318,8 @@ async def test_no_sources(hass: HomeAssistant, caplog) -> None:
     await hass.async_block_till_done()
     async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
     await hass.async_block_till_done()
-    assert "My Mock ES - Could not fetch price and energy data" in caplog.text
+    assert f"My Mock ES - Could not fetch price and energy data" in caplog.text
+    assert f"My Mock ES Cost - Could not fetch price and energy data" in caplog.text
 
 
 async def test_non_numeric_source_state(hass: HomeAssistant, caplog) -> None:
@@ -310,10 +328,12 @@ async def test_non_numeric_source_state(hass: HomeAssistant, caplog) -> None:
     await hass.async_block_till_done()
     hass.states.async_set("sensor.energy", 123.4)
     hass.states.async_set("sensor.electricity_price", "text")
+    hass.states.async_set("sensor.my_mock_es_cost", 12.2)
     await hass.async_block_till_done()
     async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
     await hass.async_block_till_done()
-    assert "My Mock ES - Possibly non-numeric source state" in caplog.text
+    for i in ["", "Cost ", "Potential Savings "]:
+        assert f"My Mock ES {i}- Possibly non-numeric source state" in caplog.text
 
 
 async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
