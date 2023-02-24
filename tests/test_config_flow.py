@@ -49,9 +49,9 @@ async def test_flow_creates_config_entry(hass):
     await hass.async_block_till_done()
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
-    assert result["title"] == "UI EnergyScore"
+    assert result["title"] == "UI"
     assert result["data"] == {
-        "name": "UI EnergyScore",
+        "name": "UI",
         "energy_entity": "sensor.energy_ui",
         "price_entity": "sensor.price_ui",
         "unique_id": "ES_energy_ui_price_ui",
@@ -75,23 +75,23 @@ async def test_flow_creates_config_entry(hass):
     assert state.attributes.get("friendly_name") == "UI EnergyScore"
 
     # Cost sensor
-    state = hass.states.get("sensor.ui_energyscore_cost")
+    state = hass.states.get("sensor.ui_cost")
     assert state
     assert state.state == "unknown"
     assert len(state.attributes) == 5
     assert state.attributes.get("state_class") == SensorStateClass.TOTAL_INCREASING
     assert state.attributes.get("last_updated_energy") == {}
-    assert state.attributes.get("friendly_name") == "UI EnergyScore Cost"
+    assert state.attributes.get("friendly_name") == "UI Cost"
     assert state.attributes.get("last_updated") is None
     assert state.attributes.get("icon") == "mdi:currency-eur"
 
     # Potential savings sensor
-    state = hass.states.get("sensor.ui_energyscore_potential_savings")
+    state = hass.states.get("sensor.ui_potential_savings")
     assert state
     assert state.state == "unknown"  # init: None
     assert len(state.attributes) == 11
     assert state.attributes.get("state_class") == SensorStateClass.MEASUREMENT
-    assert state.attributes.get("friendly_name") == "UI EnergyScore Potential Savings"
+    assert state.attributes.get("friendly_name") == "UI Potential Savings"
     assert state.attributes.get("icon") == "mdi:piggy-bank"
     assert state.attributes.get("average_cost") == None
     assert state.attributes.get("maximum_cost") == None

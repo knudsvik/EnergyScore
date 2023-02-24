@@ -43,7 +43,7 @@ async def test_new_config(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
     # EnergyScore
-    state = hass.states.get("sensor.my_mock_es")
+    state = hass.states.get("sensor.my_mock_es_energyscore")
     assert state
     assert state.state == "100"
     assert len(state.attributes) == 10
@@ -56,7 +56,7 @@ async def test_new_config(hass: HomeAssistant) -> None:
     assert state.attributes.get("price") == {}
     assert state.attributes.get("last_updated") is None
     assert state.attributes.get("icon") == "mdi:speedometer"
-    assert state.attributes.get("friendly_name") == "My Mock ES"
+    assert state.attributes.get("friendly_name") == "My Mock ES EnergyScore"
 
     # Cost sensor
     state = hass.states.get("sensor.my_mock_es_cost")
@@ -99,7 +99,9 @@ async def test_unique_id(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
     entity_reg = er.async_get(hass)
-    assert entity_reg.async_get("sensor.my_mock_es").unique_id == "Testing123"
+    assert (
+        entity_reg.async_get("sensor.my_mock_es_energyscore").unique_id == "Testing123"
+    )
     assert entity_reg.async_get("sensor.my_mock_es_cost").unique_id == "Testing123_cost"
     assert (
         entity_reg.async_get("sensor.my_mock_es_potential_savings").unique_id
@@ -138,12 +140,12 @@ async def test_update_energyscore_sensor(hass: HomeAssistant, caplog) -> None:
             )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
-            state = hass.states.get("sensor.my_mock_es")
+            state = hass.states.get("sensor.my_mock_es_energyscore")
             assert state.state == str(STATES[hour])
             assert state.attributes[QUALITY] == QUALITIES[hour]
             if hour == 0:
                 assert (
-                    "My Mock ES - Not able to calculate energy use in the last 24 hours"
+                    "My Mock ES EnergyScore - Not able to calculate energy use in the last 24 hours"
                     in caplog.text
                 )
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
@@ -156,7 +158,7 @@ async def test_update_energyscore_sensor(hass: HomeAssistant, caplog) -> None:
         hass.states.async_set("sensor.electricity_price", 1.32)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert "2022-09-18T13:00:00-0700" not in state.attributes.get("price")
         # 1 extra hour of energy data is kept to be able to calculate energy usage
         frozen_datetime.tick(delta=datetime.timedelta(hours=1))
@@ -164,7 +166,7 @@ async def test_update_energyscore_sensor(hass: HomeAssistant, caplog) -> None:
         hass.states.async_set("sensor.electricity_price", 1)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert "2022-09-18T13:00:00-0700" not in state.attributes.get("total_energy")
 
 
@@ -273,7 +275,7 @@ async def test_unavailable_sources(hass: HomeAssistant, caplog) -> None:
         hass.states.async_set("sensor.my_mock_es_cost", 23.2)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        assert f"My Mock ES - Price data is {state}" in caplog.text
+        assert f"My Mock ES EnergyScore - Price data is {state}" in caplog.text
         assert f"My Mock ES Cost - Price data is {state}" in caplog.text
         assert f"Potential data cannot be updated, state is {state}" in caplog.text
 
@@ -282,7 +284,7 @@ async def test_unavailable_sources(hass: HomeAssistant, caplog) -> None:
         hass.states.async_set("sensor.my_mock_es_cost", 23.2)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        assert f"My Mock ES - Energy data is {state}" in caplog.text
+        assert f"My Mock ES EnergyScore - Energy data is {state}" in caplog.text
         assert f"My Mock ES Cost - Energy data is {state}" in caplog.text
         assert f"Potential data cannot be updated, state is {state}" in caplog.text
 
@@ -305,8 +307,8 @@ async def test_all_sources_unavailable(hass: HomeAssistant, caplog) -> None:
         hass.states.async_set("sensor.my_mock_es_cost", state)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        assert f"My Mock ES - Energy data is {state}" in caplog.text
-        assert f"My Mock ES - Price data is {state}" in caplog.text
+        assert f"My Mock ES EnergyScore - Energy data is {state}" in caplog.text
+        assert f"My Mock ES EnergyScore - Price data is {state}" in caplog.text
         assert f"My Mock ES Cost - Energy data is {state}" in caplog.text
         assert f"My Mock ES Cost - Price data is {state}" in caplog.text
         assert f"Potential data cannot be updated, state is {state}" in caplog.text
@@ -318,7 +320,9 @@ async def test_no_sources(hass: HomeAssistant, caplog) -> None:
     await hass.async_block_till_done()
     async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
     await hass.async_block_till_done()
-    assert f"My Mock ES - Could not fetch price and energy data" in caplog.text
+    assert (
+        f"My Mock ES EnergyScore - Could not fetch price and energy data" in caplog.text
+    )
     assert f"My Mock ES Cost - Could not fetch price and energy data" in caplog.text
 
 
@@ -332,8 +336,8 @@ async def test_non_numeric_source_state(hass: HomeAssistant, caplog) -> None:
     await hass.async_block_till_done()
     async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
     await hass.async_block_till_done()
-    for i in ["", "Cost ", "Potential Savings "]:
-        assert f"My Mock ES {i}- Possibly non-numeric source state" in caplog.text
+    for i in ["EnergyScore", "Cost", "Potential Savings"]:
+        assert f"My Mock ES {i} - Possibly non-numeric source state" in caplog.text
 
 
 async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
@@ -342,7 +346,7 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
     """
     stored_state = StoredState(
         State(
-            "sensor.my_mock_es",
+            "sensor.my_mock_es_energyscore",
             "38",  # HA restores states as strings
             attributes={
                 "energy_entity": "sensor.restored_energy",
@@ -368,10 +372,10 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
 
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
-    assert "Restored My Mock ES" in caplog.text
+    assert "Restored My Mock ES EnergyScore" in caplog.text
 
     # Assert restored data
-    state = hass.states.get("sensor.my_mock_es")
+    state = hass.states.get("sensor.my_mock_es_energyscore")
     assert state.state == "38"
     assert state.attributes.get("quality") == 0.12
     assert state.attributes.get("total_energy") == {"2022-09-18T13:00:00-0700": 122.39}
@@ -381,7 +385,7 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
     # Following attributes are saved, but not restored, so should still be the default
     assert state.attributes.get("energy_entity") == "sensor.energy"
     assert state.attributes.get("price_entity") == "sensor.electricity_price"
-    assert state.attributes.get("friendly_name") == "My Mock ES"
+    assert state.attributes.get("friendly_name") == "My Mock ES EnergyScore"
     assert state.attributes.get("icon") == "mdi:speedometer"
 
 
@@ -491,7 +495,7 @@ async def test_declining_energy_energyscore(hass, caplog):
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "62"
         assert state.attributes.get("quality") == 0.08
 
@@ -506,11 +510,11 @@ async def test_declining_energy_energyscore(hass, caplog):
         hass.states.async_set("sensor.electricity_price", TEST_PARAMS[30]["price"])
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "81"
         assert state.attributes.get("quality") == 0.08
         assert (
-            "My Mock ES - The energy entity's state class is measurement. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
+            "My Mock ES EnergyScore - The energy entity's state class is measurement. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
             in caplog.text
         )
 
@@ -518,10 +522,10 @@ async def test_declining_energy_energyscore(hass, caplog):
         hass.states.async_set("sensor.energy", TEST_PARAMS[30]["energy"])
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "81"
         assert (
-            "My Mock ES - The energy entity's state class is None. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
+            "My Mock ES EnergyScore - The energy entity's state class is None. Please change energy entity to a total/total_increasing, or fix the current energy entity state class."
             in caplog.text
         )
 
@@ -535,11 +539,11 @@ async def test_declining_energy_energyscore(hass, caplog):
         )
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "81"
         assert state.attributes.get("quality") == 0.08
         assert (
-            "My Mock ES - The energy entity's state class is total, but there is no last_reset attribute to confirm that the sensor is expected to decline the value."
+            "My Mock ES EnergyScore - The energy entity's state class is total, but there is no last_reset attribute to confirm that the sensor is expected to decline the value."
             in caplog.text
         )
 
@@ -551,7 +555,7 @@ async def test_declining_energy_energyscore(hass, caplog):
         )
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "32"
         assert state.attributes.get("quality") == 0.12
 
@@ -566,7 +570,7 @@ async def test_declining_energy_energyscore(hass, caplog):
         )
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "32"
         assert state.attributes.get("quality") == 0.12
 
@@ -587,7 +591,7 @@ async def test_quality_energyscore(hass: HomeAssistant) -> None:
             )
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
-            state = hass.states.get("sensor.my_mock_es")
+            state = hass.states.get("sensor.my_mock_es_energyscore")
             if hour >= 25:
                 assert state.attributes[QUALITY] == 1
             else:
@@ -603,7 +607,7 @@ async def test_quality_energyscore(hass: HomeAssistant) -> None:
             hass.states.async_set("sensor.electricity_price", part_hour)
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
-            state = hass.states.get("sensor.my_mock_es")
+            state = hass.states.get("sensor.my_mock_es_energyscore")
             assert state.attributes[QUALITY] == 1
 
 
@@ -656,7 +660,7 @@ async def test_energy_treshold(hass: HomeAssistant) -> None:
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert state.state == "71"
         assert state.attributes[QUALITY] == 0.17
 
@@ -689,7 +693,7 @@ async def test_rolling_hours(hass: HomeAssistant, rolling_hours, hours, score) -
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert len(state.attributes[PRICES]) == rolling_hours
         assert len(state.attributes[ENERGY]) == rolling_hours + 1
         assert state.state == str(score)
@@ -718,7 +722,7 @@ async def test_rolling_hours_default(hass: HomeAssistant) -> None:
             await hass.async_block_till_done()
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
-        state = hass.states.get("sensor.my_mock_es")
+        state = hass.states.get("sensor.my_mock_es_energyscore")
         assert len(state.attributes[PRICES]) == 24
 
 

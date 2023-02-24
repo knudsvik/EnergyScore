@@ -174,7 +174,7 @@ class EnergyScore(SensorEntity, RestoreEntity):
         self._energy = None
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self.hass = hass  # TODO: needed?
-        self._name = config[CONF_NAME]
+        self._name = f"{config[CONF_NAME]} EnergyScore"
         self._norm_energy = np.array(None)
         self._norm_prices = np.array(None)
         self._price = None
