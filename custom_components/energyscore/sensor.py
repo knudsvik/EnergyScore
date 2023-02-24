@@ -52,7 +52,7 @@ from .const import (
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 # Time between updating data
-SCAN_INTERVAL = datetime.timedelta(minutes=1)
+SCAN_INTERVAL = datetime.timedelta(minutes=10)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -433,6 +433,8 @@ class Cost(SensorEntity, RestoreEntity):
             if self.attr[LAST_UPDATED].date() == dt.now().date():
                 self._state = float(last_state.state)
                 _LOGGER.debug("Restored %s", self._name)
+            else:
+                self._state = 0
 
     def process_new_data(self):
         """Processes the update data"""
@@ -594,6 +596,8 @@ class PotentialSavings(SensorEntity, RestoreEntity):
                 ]:
                     if attribute in last_state.attributes:
                         self.attr[attribute] = last_state.attributes[attribute]
+            else:
+                self._state = 0
             _LOGGER.debug("Restored %s", self._name)
 
     def process_new_data(self):
