@@ -389,46 +389,64 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("icon") == "mdi:speedometer"
 
 
-async def test_restore_cost(hass: HomeAssistant, caplog) -> None:
+@pytest.mark.parametrize("restore_day", ["same day", "another day"])
+async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
     """Testing restoring cost sensor state and attributes"""
-    now = dt.now()
+    if restore_day == "same day":
+        initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    elif restore_day == "another day":
+        initial_datetime = dt.parse_datetime("2022-09-23 04:23:24+01:00")
+
     stored_state = StoredState(
         State(
             "sensor.my_mock_es_cost",
             "2.33",  # HA restores states as strings
             attributes={
                 "last_updated_energy": {"2022-09-18 11:10:44-07:00": 4.2},
-                "last_updated": now,
+                "last_updated": "2022-09-18 11:10:44-07:00",
             },
         ),
         None,
-        dt.now(),
+        "2022-09-18 11:10:44-07:00",
     )
 
-    data = await RestoreStateData.async_get_instance(hass)
-    await hass.async_block_till_done()
-    await data.store.async_save([stored_state.as_dict()])
+    with freeze_time(initial_datetime) as frozen_datetime:
+        data = await RestoreStateData.async_get_instance(hass)
+        await hass.async_block_till_done()
+        await data.store.async_save([stored_state.as_dict()])
 
-    # Emulate a fresh load
-    hass.data.pop(DATA_RESTORE_STATE_TASK)
+        # Emulate a fresh load
+        hass.data.pop(DATA_RESTORE_STATE_TASK)
 
-    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
-    await hass.async_block_till_done()
-    assert "Restored My Mock ES Cost" in caplog.text
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+        await hass.async_block_till_done()
 
-    # Assert restored data
-    state = hass.states.get("sensor.my_mock_es_cost")
-    assert state.state == "2.33"
-    assert state.attributes.get("last_updated_energy") == {
-        "2022-09-18 11:10:44-07:00": 4.2
-    }
-    assert state.attributes.get("last_updated") == now
+        # Assert restored data
+        state = hass.states.get("sensor.my_mock_es_cost")
+        assert state.attributes.get("last_updated_energy") == {
+            "2022-09-18 11:10:44-07:00": 4.2
+        }
+        assert state.attributes.get("last_updated") == dt.parse_datetime(
+            "2022-09-18 11:10:44-07:00"
+        )
+        if restore_day == "same day":
+            assert "Restored My Mock ES Cost" in caplog.text
+            assert state.state == "2.33"
+        elif restore_day == "another day":
+            assert "Restored My Mock ES Cost" not in caplog.text
+            assert state.state == "0"
 
 
-async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
+@pytest.mark.parametrize("restore_day", ["same day", "another day"])
+async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> None:
     """Testing restoring potential sensor state and attributes"""
-    now = dt.now()
-    now_str = now.strftime("%Y-%m-%dT%H:%M:%S%z")
+    if restore_day == "same day":
+        initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    elif restore_day == "another day":
+        initial_datetime = dt.parse_datetime("2022-09-23 04:23:24+01:00")
+
+    # now = dt.now()
+    # now_str = now.strftime("%Y-%m-%dT%H:%M:%S%z")
     stored_state = StoredState(
         State(
             "sensor.my_mock_es_potential_savings",
@@ -439,42 +457,53 @@ async def test_restore_potential(hass: HomeAssistant, caplog) -> None:
                 "minimum_cost": 0.23,
                 "energy_today": 13.1,
                 "last_updated_energy": {"2022-09-18T11:10:44-07:00": 4.2},
-                "last_updated": now_str,
+                "last_updated": dt.parse_datetime("2022-09-18 11:10:44-07:00"),
                 "price": {"2022-09-18T13:00:00-0700": 0.99},
                 "quality": 0.76,
             },
         ),
         None,
-        dt.now().strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "2022-09-18 11:10:44-07:00",
     )
 
-    data = await RestoreStateData.async_get_instance(hass)
-    await hass.async_block_till_done()
-    await data.store.async_save([stored_state.as_dict()])
+    with freeze_time(initial_datetime) as frozen_datetime:
+        data = await RestoreStateData.async_get_instance(hass)
+        await hass.async_block_till_done()
+        await data.store.async_save([stored_state.as_dict()])
 
-    # Emulate a fresh load
-    hass.data.pop(DATA_RESTORE_STATE_TASK)
+        # Emulate a fresh load
+        hass.data.pop(DATA_RESTORE_STATE_TASK)
 
-    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
-    await hass.async_block_till_done()
-    assert "Restored My Mock ES Potential Savings" in caplog.text
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+        await hass.async_block_till_done()
+        assert "Restored My Mock ES Potential Savings" in caplog.text
 
-    # Assert restored data
-    state = hass.states.get("sensor.my_mock_es_potential_savings")
-    assert state.state == "3.33"
-    assert state.attributes.get("average_cost") == 1.13
-    assert state.attributes.get("maximum_cost") == 5.34
-    assert state.attributes.get("minimum_cost") == 0.23
-    assert state.attributes.get("energy_today") == 13.1
-    assert state.attributes.get("quality") == 0.76
+        # Assert restored data
+        state = hass.states.get("sensor.my_mock_es_potential_savings")
+        assert state.attributes.get("last_updated") == dt.parse_datetime(
+            "2022-09-18 11:10:44-07:00"
+        )
+        if restore_day == "same day":
+            assert state.state == "3.33"
+            assert state.attributes.get("average_cost") == 1.13
+            assert state.attributes.get("maximum_cost") == 5.34
+            assert state.attributes.get("minimum_cost") == 0.23
+            assert state.attributes.get("energy_today") == 13.1
+            assert state.attributes.get("quality") == 0.76
 
-    assert state.attributes.get("last_updated_energy") == {
-        "2022-09-18T11:10:44-07:00": 4.2
-    }
-    assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
-    assert (
-        state.attributes.get("last_updated").strftime("%Y-%m-%dT%H:%M:%S%z") == now_str
-    )
+            assert state.attributes.get("last_updated_energy") == {
+                "2022-09-18T11:10:44-07:00": 4.2
+            }
+            assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
+        elif restore_day == "another day":
+            assert state.state == "0"
+            assert state.attributes.get("average_cost") is None
+            assert state.attributes.get("maximum_cost") is None
+            assert state.attributes.get("minimum_cost") is None
+            assert state.attributes.get("energy_today") is None
+            assert state.attributes.get("quality") is None
+            assert state.attributes.get("last_updated_energy") == {}
+            assert state.attributes.get("price") == {}
 
 
 async def test_declining_energy_energyscore(hass, caplog):
