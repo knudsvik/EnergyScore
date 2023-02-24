@@ -654,7 +654,11 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         )
 
         # Compare min and actual cost to get potential
-        self._state = round(self.cost.state - self.attr[COST_MIN], 2)
+        self._state = (
+            round(self.cost.state - self.attr[COST_MIN], 2)
+            if not self.cost.state - self.attr[COST_MIN] < 0
+            else 0
+        )
 
         # Calculate quality
         self.attr[QUALITY] = round(len(self.attr[PRICES]) / (now.hour + 1), 2)

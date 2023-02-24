@@ -207,7 +207,7 @@ async def test_update_cost_sensor(hass: HomeAssistant) -> None:
 
 
 async def test_update_savings_sensor(hass: HomeAssistant) -> None:
-    """Test the update of savings sensor by moving time"""
+    """Test the update of potential savings sensor by moving time"""
 
     initial_datetime = dt.parse_datetime("2022-09-18 19:08:44-07:00")
 
@@ -748,3 +748,30 @@ async def test_rolling_hours_range_high(hass: HomeAssistant, caplog) -> None:
         "value must be at most 168 for dictionary value @ data['rolling_hours']. Got 170"
         in caplog.text
     )
+
+
+async def test_negative_potential(hass: HomeAssistant) -> None:
+    """Tests that potential cannot become negative"""
+
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+        await hass.async_block_till_done()
+
+        # Setting up a potential that would give negative potential (since cost = 0)
+        hass.states.async_set("sensor.energy", 1.2)
+        hass.states.async_set("sensor.electricity_price", 0.5)
+        hass.states.async_set("sensor.my_mock_es_cost", 0)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+
+        frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+        hass.states.async_set("sensor.energy", 2.8)
+        hass.states.async_set("sensor.electricity_price", 1.0)
+        hass.states.async_set("sensor.my_mock_es_cost", 0)
+        async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.my_mock_es_potential_savings")
+        assert float(state.state) == 0
