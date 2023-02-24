@@ -34,7 +34,7 @@ EnergyScore sensors can be added directly from the user interface by using the M
 Attribute | Description
 --------- | -----------
 Name | The name of the integration. You can change it again later.
-Energy entity | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
+Energy entity | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely. If several is available, it is recommended to choose one with high update frequency.
 Price entity | A price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 
 ### Advanced configuration
@@ -63,7 +63,7 @@ sensor:
 Attribute | Data type | Type | Description
 --------- | --------- | ---- | -----------
 name | string | Required | Name of the sensors to use in the frontend.
-energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
+energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely. If several is available, it is recommended to choose one with high update frequency.
 price_entity | string | Required | TA price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 unique_id | string | Optional | Unique id to be able to configure the entity in the UI.
 energy_treshold | float | Optional | Energy less than the treshold (during one hour) will not contribute to the EnergyScore (default = 0).
