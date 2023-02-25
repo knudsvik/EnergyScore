@@ -17,11 +17,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import (
-    DeviceInfo,
-    get_capability,
-    get_supported_features,
-)
+from homeassistant.helpers.entity import DeviceInfo, get_unit_of_measurement
 import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -382,6 +378,7 @@ class Cost(SensorEntity, RestoreEntity):
 
     def __init__(self, hass: HomeAssistant, config):
         self._attr_icon: str = ICON_COST
+        self._attr_unit_of_measurement = None
         self._attr_unique_id = f"{config.get(CONF_UNIQUE_ID)}_cost"
         self._energy_entity = config[CONF_ENERGY_ENTITY]
         self._name = f"{config[CONF_NAME]} Cost"
@@ -389,10 +386,10 @@ class Cost(SensorEntity, RestoreEntity):
         self._state = None
         self.attr = {LAST_ENERGY: {}, LAST_UPDATED: None}
         self.config = config
+        self.energy = None
         self.energy_usage = None
         self.hass = hass
         self.price = None
-        self.energy = None
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -417,6 +414,35 @@ class Cost(SensorEntity, RestoreEntity):
     def extra_state_attributes(self):
         return self.attr
 
+    @property
+    def unit_of_measurement(self) -> str:
+        """Return the unit of measurement."""
+        return self.get_uom()
+
+    def get_uom(self) -> str:
+        """Finds the unit of measurement based on source entities"""
+        entity_reg = er.async_get(self.hass)
+        if entity_reg.async_is_registered(
+            self._price_entity
+        ) and entity_reg.async_is_registered(self._energy_entity):
+            price_uom = get_unit_of_measurement(self.hass, self._price_entity)
+            energy_uom = get_unit_of_measurement(self.hass, self._energy_entity)
+            if "/" in price_uom and price_uom.split("/")[1] == energy_uom:
+                self._attr_unit_of_measurement = price_uom.split("/")[0]
+            else:
+                _LOGGER.info(
+                    "Cannot provide unit of measurement for %s since the units of measurement for price (%s) and energy (%s) sensors do not match",
+                    self._name,
+                    price_uom,
+                    energy_uom,
+                )
+        else:
+            _LOGGER.info(
+                "Cannot provide unit of measurement for %s since the source sensors are not available",
+                self._name,
+            )
+        return self._attr_unit_of_measurement
+
     async def async_added_to_hass(self) -> None:
         """Restore last state if same date"""
         _LOGGER.debug("Trying to restore %s", self._name)
@@ -426,12 +452,22 @@ class Cost(SensorEntity, RestoreEntity):
             and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE)
             and last_state.attributes[LAST_UPDATED] is not None
         ):
+            # Try to restore the unit of measurement if not already set
+            if (
+                self._attr_unit_of_measurement is None
+                and "unit_of_measurement" in last_state.attributes
+                and last_state.attributes["unit_of_measurement"] is not None
+            ):
+                self._attr_unit_of_measurement = last_state.attributes[
+                    "unit_of_measurement"
+                ]
+
             self.attr[LAST_UPDATED] = dt.parse_datetime(
                 last_state.attributes[LAST_UPDATED]
             )
-            self.attr[LAST_ENERGY] = last_state.attributes[LAST_ENERGY]
             if self.attr[LAST_UPDATED].date() == dt.now().date():
                 self._state = float(last_state.state)
+                self.attr[LAST_ENERGY] = last_state.attributes[LAST_ENERGY]
                 _LOGGER.debug("Restored %s", self._name)
             else:
                 self._state = 0
@@ -484,6 +520,9 @@ class Cost(SensorEntity, RestoreEntity):
 
     async def async_update(self):
         """Updates the sensor"""
+
+        if self._attr_unit_of_measurement is None:
+            self.get_uom()
 
         _LOGGER.debug("The cost for %s are being updated", self._name)
         try:

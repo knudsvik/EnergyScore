@@ -1,5 +1,6 @@
 """
 Sensor tests for EnergyScore
+Neat testing in groups: https://github.com/home-assistant/core/blob/dev/tests/components/group/test_sensor.py
 """
 
 import copy
@@ -18,9 +19,14 @@ from homeassistant.helpers.restore_state import (
 )
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt
-from pytest_homeassistant_custom_component.common import async_fire_time_changed
+from pytest_homeassistant_custom_component.common import (
+    async_fire_time_changed,
+    MockEntity,
+    MockEntityPlatform,
+)
 
-from custom_components.energyscore.const import QUALITY, PRICES, ENERGY
+from custom_components.energyscore import config_flow
+from custom_components.energyscore.const import DOMAIN, ENERGY, PRICES, QUALITY
 from custom_components.energyscore.sensor import (
     SCAN_INTERVAL,
     normalise_energy,
@@ -33,11 +39,12 @@ from .const import (
     PRICE_DICT,
     SAME_PRICE_DICT,
     VALID_CONFIG,
+    VALID_UI_CONFIG,
     TEST_PARAMS,
 )
 
 
-async def test_new_config(hass: HomeAssistant) -> None:
+async def test_new_config(hass: HomeAssistant, caplog) -> None:
     """Testing a default setup of an energyscore sensor"""
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
@@ -70,6 +77,10 @@ async def test_new_config(hass: HomeAssistant) -> None:
     assert state.attributes.get("icon") == "mdi:currency-eur"
     assert state.attributes.get("last_updated") is None
     assert state.attributes.get("friendly_name") == "My Mock ES Cost"
+    assert (
+        "Cannot provide unit of measurement for My Mock ES Cost since the source sensors are not available"
+        in caplog.text
+    )
 
     # Potential sensor
     state = hass.states.get("sensor.my_mock_es_potential_savings")
@@ -423,15 +434,16 @@ async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
 
         # Assert restored data
         state = hass.states.get("sensor.my_mock_es_cost")
-        assert state.attributes.get("last_updated_energy") == {
-            "2022-09-18 11:10:44-07:00": 4.2
-        }
+
         assert state.attributes.get("last_updated") == dt.parse_datetime(
             "2022-09-18 11:10:44-07:00"
         )
         if restore_day == "same day":
             assert "Restored My Mock ES Cost" in caplog.text
             assert state.state == "2.33"
+            assert state.attributes.get("last_updated_energy") == {
+                "2022-09-18 11:10:44-07:00": 4.2
+            }
         elif restore_day == "another day":
             assert "Restored My Mock ES Cost" not in caplog.text
             assert state.state == "0"
@@ -804,3 +816,40 @@ async def test_negative_potential(hass: HomeAssistant) -> None:
 
         state = hass.states.get("sensor.my_mock_es_potential_savings")
         assert float(state.state) == 0
+
+
+@pytest.mark.parametrize("uom", ["NOK/kWh", "NOK", "NOK/Wh"])
+async def test_uom(hass: HomeAssistant, caplog, uom: str) -> None:
+    """Cost sensor picks up unit of measurement from price sensor"""
+
+    entity_reg = er.async_get(hass)
+
+    for entity in ["electricity_price", "energy"]:
+        entity_reg.async_get_or_create(
+            "sensor", "test", entity, suggested_object_id=entity
+        )
+
+    hass.states.async_set(
+        "sensor.electricity_price", 1.22, attributes={"unit_of_measurement": uom}
+    )
+    hass.states.async_set(
+        "sensor.energy", 2.22, attributes={"unit_of_measurement": "kWh"}
+    )
+
+    await hass.async_block_till_done()
+    assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.my_mock_es_cost")
+    if uom == "NOK/kWh":
+        assert state.attributes.get("unit_of_measurement") == "NOK"
+    elif uom == "NOK":
+        assert (
+            "Cannot provide unit of measurement for My Mock ES Cost since the units of measurement for price (NOK) and energy (kWh) sensors do not match"
+            in caplog.text
+        )
+    elif uom == "NOK/Wh":
+        assert (
+            "Cannot provide unit of measurement for My Mock ES Cost since the units of measurement for price (NOK/Wh) and energy (kWh) sensors do not match"
+            in caplog.text
+        )
