@@ -37,3 +37,4 @@ sensor:
     energy_entity: sensor.total_energy_consumption
     price_entity: sensor.electricity_price
     unique_id: fknfkkkf
+  - platform: demo

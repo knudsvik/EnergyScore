@@ -7,7 +7,9 @@ Inspiration from
 from unittest import mock
 
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.components.sensor import SensorStateClass
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from custom_components.energyscore import config_flow
 from custom_components.energyscore.const import DOMAIN
@@ -47,21 +49,69 @@ async def test_flow_creates_config_entry(hass):
     await hass.async_block_till_done()
 
     assert result["type"] == FlowResultType.CREATE_ENTRY
-    assert result["title"] == "UI EnergyScore"
+    assert result["title"] == "UI"
     assert result["data"] == {
-        "name": "UI EnergyScore",
+        "name": "UI",
         "energy_entity": "sensor.energy_ui",
         "price_entity": "sensor.price_ui",
         "unique_id": "ES_energy_ui_price_ui",
     }
     assert result["context"]["unique_id"] == "ES_energy_ui_price_ui"
 
+    # EnergyScore
     state = hass.states.get("sensor.ui_energyscore")
+    assert state
     assert state.state == "100"
+    assert len(state.attributes) == 10
+    assert state.attributes.get("unit_of_measurement") == "%"
+    assert state.attributes.get("state_class") == SensorStateClass.MEASUREMENT
     assert state.attributes.get("energy_entity") == "sensor.energy_ui"
     assert state.attributes.get("price_entity") == "sensor.price_ui"
-    assert state.attributes.get("friendly_name") == "UI EnergyScore"
+    assert state.attributes.get("quality") == 0
+    assert state.attributes.get("total_energy") == {}
+    assert state.attributes.get("price") == {}
+    assert state.attributes.get("last_updated") is None
     assert state.attributes.get("icon") == "mdi:speedometer"
+    assert state.attributes.get("friendly_name") == "UI EnergyScore"
+
+    # Cost sensor
+    state = hass.states.get("sensor.ui_cost")
+    assert state
+    assert state.state == "unknown"
+    assert len(state.attributes) == 5
+    assert state.attributes.get("state_class") == SensorStateClass.TOTAL_INCREASING
+    assert state.attributes.get("last_updated_energy") == {}
+    assert state.attributes.get("friendly_name") == "UI Cost"
+    assert state.attributes.get("last_updated") is None
+    assert state.attributes.get("icon") == "mdi:currency-eur"
+
+    # Potential savings sensor
+    state = hass.states.get("sensor.ui_potential_savings")
+    assert state
+    assert state.state == "unknown"  # init: None
+    assert len(state.attributes) == 11
+    assert state.attributes.get("state_class") == SensorStateClass.MEASUREMENT
+    assert state.attributes.get("friendly_name") == "UI Potential Savings"
+    assert state.attributes.get("icon") == "mdi:piggy-bank"
+    assert state.attributes.get("average_cost") == None
+    assert state.attributes.get("maximum_cost") == None
+    assert state.attributes.get("minimum_cost") == None
+    assert state.attributes.get("energy_today") == None
+    assert state.attributes.get("last_updated_energy") == {}
+    assert state.attributes.get("last_updated") is None
+    assert state.attributes.get("price") == {}
+    assert state.attributes.get("quality") is None
+
+    # Test all sensors are added to same device
+    entity_reg = er.async_get(hass)
+    score = entity_reg.async_get_or_create("sensor", DOMAIN, "ES_energy_ui_price_ui")
+    cost = entity_reg.async_get_or_create(
+        "sensor", DOMAIN, "ES_energy_ui_price_ui_cost"
+    )
+    save = entity_reg.async_get_or_create(
+        "sensor", DOMAIN, "ES_energy_ui_price_ui_potential_savings"
+    )
+    assert score.device_id == cost.device_id == save.device_id
 
 
 async def test_options_flow_add_treshold(hass):

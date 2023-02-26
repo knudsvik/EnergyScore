@@ -7,12 +7,15 @@
 [![License][license-shield]](LICENSE)
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
+An EnergyScore integration provides three sensors; EnergyScore, Cost and Potential Savings.
 
 EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout the last 24 hours. The EnergyScore will be 0% if you use all of your energy in the most expensive hour, 100% in the cheapest hour, but most likely somewhere in between depending on how well you are able to match your energy use with cheap prices. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
 
 <img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/energyScore_gauge.png" title="EnergyScore Gauge"/>
 
-You can set up several EnergyScore sensors,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler. Each sensor has a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of the last 24, the quality will be 0.75. The higher the quality is, the more you can trust the EnergyScore.
+The cost sensor provides the current day cost while the potential savings sensor compares actual current day cost with what the cost would be if all energy was consumed in the cheapes hour of the day. This is thus the potential savings that can be achieved if energy usage is optimised.
+
+You can set up several EnergyScore integrations,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler or dishwasher. EnergyScore and Potential Savings sensors both have a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of the last 24, the quality will be 0.75. The higher the quality is, the more you can trust the sensors.
 
 # Get started
 
@@ -30,8 +33,8 @@ EnergyScore sensors can be added directly from the user interface by using the M
 
 Attribute | Description
 --------- | -----------
-Name | The name the sensor should have. You can change it again later.
-Energy entity | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
+Name | Name of the integration instance. This will provide name for the sensors to use in the frontend, but can be changed later. "Boiler" will give sensors: sensor.boiler_energyscore, sensor.boiler_cost and sensor.boiler_potential_savings (which can all be changed later).
+Energy entity | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely. If several is available, it is recommended to choose one with high update frequency.
 Price entity | A price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 
 ### Advanced configuration
@@ -50,7 +53,7 @@ Alternatively, this integration can be configured and set up manually via YAML i
 ```yaml
 sensor:
   - platform: energyscore
-    name: Heater Energy Score
+    name: Heater
     energy_entity: sensor.heater_energy
     price_entity: sensor.nordpool_electricity_price
 ```
@@ -59,8 +62,8 @@ sensor:
 
 Attribute | Data type | Type | Description
 --------- | --------- | ---- | -----------
-name | string | Required | Name of the sensor to use in the frontend.
-energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely.
+name | string | Required | Name of the integration instance. This will provide name for the sensors to use in the frontend, but can be changed later if a unique_id is provided. "Boiler" will give sensors: sensor.boiler_energyscore, sensor.boiler_cost and sensor.boiler_potential_savings.
+energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely. If several is available, it is recommended to choose one with high update frequency.
 price_entity | string | Required | TA price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
 unique_id | string | Optional | Unique id to be able to configure the entity in the UI.
 energy_treshold | float | Optional | Energy less than the treshold (during one hour) will not contribute to the EnergyScore (default = 0).

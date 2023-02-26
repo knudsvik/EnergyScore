@@ -23,7 +23,7 @@ VALID_CONFIG = {
 }
 
 VALID_UI_CONFIG = {
-    "name": "UI EnergyScore",
+    "name": "UI",
     "energy_entity": "sensor.energy_ui",
     "price_entity": "sensor.price_ui",
 }
