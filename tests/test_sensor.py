@@ -12,6 +12,7 @@ from homeassistant.components import sensor
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, State
 import homeassistant.helpers.entity_registry as er
+from homeassistant.helpers.entity import get_unit_of_measurement
 from homeassistant.helpers.restore_state import (
     DATA_RESTORE_STATE_TASK,
     RestoreStateData,
@@ -70,6 +71,7 @@ async def test_new_config(hass: HomeAssistant, caplog) -> None:
     assert state
     assert state.state == "unknown"  # Init None
     assert len(state.attributes) == 5
+    assert state.attributes.get("unit_of_measurement") == None
     assert (
         state.attributes.get("state_class") == sensor.SensorStateClass.TOTAL_INCREASING
     )
@@ -87,6 +89,7 @@ async def test_new_config(hass: HomeAssistant, caplog) -> None:
     assert state
     assert state.state == "unknown"
     assert len(state.attributes) == 11
+    assert state.attributes.get("unit_of_measurement") == None
     assert state.attributes.get("state_class") == sensor.SensorStateClass.MEASUREMENT
     assert state.attributes.get("icon") == "mdi:piggy-bank"
     assert state.attributes.get("average_cost") == None
@@ -403,6 +406,7 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
 @pytest.mark.parametrize("restore_day", ["same day", "another day"])
 async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
     """Testing restoring cost sensor state and attributes"""
+
     if restore_day == "same day":
         initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
     elif restore_day == "another day":
@@ -415,6 +419,7 @@ async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
             attributes={
                 "last_updated_energy": {"2022-09-18 11:10:44-07:00": 4.2},
                 "last_updated": "2022-09-18 11:10:44-07:00",
+                "unit_of_measurement": "NOK",
             },
         ),
         None,
@@ -438,6 +443,9 @@ async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
         assert state.attributes.get("last_updated") == dt.parse_datetime(
             "2022-09-18 11:10:44-07:00"
         )
+
+        assert get_unit_of_measurement(hass, "sensor.my_mock_es_cost") == "NOK"
+
         if restore_day == "same day":
             assert "Restored My Mock ES Cost" in caplog.text
             assert state.state == "2.33"
@@ -472,6 +480,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> No
                 "last_updated": dt.parse_datetime("2022-09-18 11:10:44-07:00"),
                 "price": {"2022-09-18T13:00:00-0700": 0.99},
                 "quality": 0.76,
+                "unit_of_measurement": "NOK",
             },
         ),
         None,
@@ -494,6 +503,10 @@ async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> No
         state = hass.states.get("sensor.my_mock_es_potential_savings")
         assert state.attributes.get("last_updated") == dt.parse_datetime(
             "2022-09-18 11:10:44-07:00"
+        )
+        assert (
+            get_unit_of_measurement(hass, "sensor.my_mock_es_potential_savings")
+            == "NOK"
         )
         if restore_day == "same day":
             assert state.state == "3.33"
@@ -840,16 +853,26 @@ async def test_uom(hass: HomeAssistant, caplog, uom: str) -> None:
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.my_mock_es_cost")
+    # Updating for potential savings to pick up the uom from cost
+    async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+    await hass.async_block_till_done()
+
+    state_cost = hass.states.get("sensor.my_mock_es_cost")
+    state_save = hass.states.get("sensor.my_mock_es_potential_savings")
     if uom == "NOK/kWh":
-        assert state.attributes.get("unit_of_measurement") == "NOK"
+        assert state_cost.attributes.get("unit_of_measurement") == "NOK"
+        assert state_save.attributes.get("unit_of_measurement") == "NOK"
     elif uom == "NOK":
         assert (
             "Cannot provide unit of measurement for My Mock ES Cost since the units of measurement for price (NOK) and energy (kWh) sensors do not match"
             in caplog.text
         )
+        assert state_cost.attributes.get("unit_of_measurement") == None
+        assert state_save.attributes.get("unit_of_measurement") == None
     elif uom == "NOK/Wh":
         assert (
             "Cannot provide unit of measurement for My Mock ES Cost since the units of measurement for price (NOK/Wh) and energy (kWh) sensors do not match"
             in caplog.text
         )
+        assert state_cost.attributes.get("unit_of_measurement") == None
+        assert state_save.attributes.get("unit_of_measurement") == None

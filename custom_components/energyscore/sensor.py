@@ -563,6 +563,7 @@ class PotentialSavings(SensorEntity, RestoreEntity):
 
     def __init__(self, hass, config):
         self._attr_icon: str = ICON_SAVINGS
+        self._attr_unit_of_measurement = None
         self._attr_unique_id = f"{config.get(CONF_UNIQUE_ID)}_potential_savings"
         self._hass = hass
         self._name = f"{config[CONF_NAME]} Potential Savings"
@@ -580,6 +581,7 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         self.config = config
         self.cost_uid = f"{config.get(CONF_UNIQUE_ID)}_cost"
         self.cost = None
+        self.cost_entity = None
         self.energy = None
         self.energy_entity = config[CONF_ENERGY_ENTITY]
         self.price = None
@@ -609,6 +611,11 @@ class PotentialSavings(SensorEntity, RestoreEntity):
     def extra_state_attributes(self):
         return self.attr
 
+    @property
+    def unit_of_measurement(self) -> str:
+        """Return the unit of measurement."""
+        return self._attr_unit_of_measurement
+
     async def async_added_to_hass(self) -> None:
         """Restore last state if same date"""
         _LOGGER.debug("Trying to restore %s", self._name)
@@ -618,6 +625,16 @@ class PotentialSavings(SensorEntity, RestoreEntity):
             and last_state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE)
             and last_state.attributes[LAST_UPDATED] is not None
         ):
+            # Try to restore the unit of measurement if not already set
+            if (
+                self._attr_unit_of_measurement is None
+                and "unit_of_measurement" in last_state.attributes
+                and last_state.attributes["unit_of_measurement"] is not None
+            ):
+                self._attr_unit_of_measurement = last_state.attributes[
+                    "unit_of_measurement"
+                ]
+
             self.attr[LAST_UPDATED] = dt.parse_datetime(
                 last_state.attributes[LAST_UPDATED]
             )
@@ -714,12 +731,16 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         _LOGGER.debug("The savings for %s are being updated", self._name)
 
         try:
-            # Get Cost entity
+            # Get Cost entity and unit of measurement
             entity_reg = er.async_get(self._hass)
             self.cost_entity = entity_reg.async_get_entity_id(
                 "sensor", DOMAIN, self.cost_uid
             )
+            self._attr_unit_of_measurement = get_unit_of_measurement(
+                self.hass, self.cost_entity
+            )
 
+            # Update source states
             self.cost = self.hass.states.get(self.cost_entity)
             self.energy = self.hass.states.get(self.energy_entity)
             self.price = self.hass.states.get(self.price_entity)
