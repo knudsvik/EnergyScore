@@ -403,13 +403,12 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("icon") == "mdi:speedometer"
 
 
-@pytest.mark.parametrize("restore_day", ["same day", "another day"])
-async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
+@pytest.mark.parametrize("option", ["same day", "another day", "another uom"])
+async def test_restore_cost(hass: HomeAssistant, caplog, option) -> None:
     """Testing restoring cost sensor state and attributes"""
 
-    if restore_day == "same day":
-        initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
-    elif restore_day == "another day":
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    if option == "another day":
         initial_datetime = dt.parse_datetime("2022-09-23 04:23:24+01:00")
 
     stored_state = StoredState(
@@ -446,23 +445,41 @@ async def test_restore_cost(hass: HomeAssistant, caplog, restore_day) -> None:
 
         assert get_unit_of_measurement(hass, "sensor.my_mock_es_cost") == "NOK"
 
-        if restore_day == "same day":
+        if option == "same day":
             assert "Restored My Mock ES Cost" in caplog.text
             assert state.state == "2.33"
             assert state.attributes.get("last_updated_energy") == {
                 "2022-09-18 11:10:44-07:00": 4.2
             }
-        elif restore_day == "another day":
+        elif option == "another day":
             assert "Restored My Mock ES Cost" not in caplog.text
             assert state.state == "0"
+        elif option == "another uom":  # UoM is updated even when restoring another UoM
+            entity_reg = er.async_get(hass)
+            for entity in ["electricity_price", "energy"]:
+                entity_reg.async_get_or_create(
+                    "sensor", "test", entity, suggested_object_id=entity
+                )
+            hass.states.async_set(
+                "sensor.electricity_price",
+                1.22,
+                attributes={"unit_of_measurement": "EUR/kWh"},
+            )
+            hass.states.async_set(
+                "sensor.energy", 2.22, attributes={"unit_of_measurement": "kWh"}
+            )
+            await hass.async_block_till_done()
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+            assert get_unit_of_measurement(hass, "sensor.my_mock_es_cost") == "EUR"
 
 
-@pytest.mark.parametrize("restore_day", ["same day", "another day"])
-async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> None:
+@pytest.mark.parametrize("option", ["same day", "another day", "another uom"])
+async def test_restore_potential(hass: HomeAssistant, caplog, option) -> None:
     """Testing restoring potential sensor state and attributes"""
-    if restore_day == "same day":
-        initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
-    elif restore_day == "another day":
+
+    initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
+    if option == "another day":
         initial_datetime = dt.parse_datetime("2022-09-23 04:23:24+01:00")
 
     # now = dt.now()
@@ -508,7 +525,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> No
             get_unit_of_measurement(hass, "sensor.my_mock_es_potential_savings")
             == "NOK"
         )
-        if restore_day == "same day":
+        if option == "same day":
             assert state.state == "3.33"
             assert state.attributes.get("average_cost") == 1.13
             assert state.attributes.get("maximum_cost") == 5.34
@@ -520,7 +537,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> No
                 "2022-09-18T11:10:44-07:00": 4.2
             }
             assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
-        elif restore_day == "another day":
+        elif option == "another day":
             assert state.state == "0"
             assert state.attributes.get("average_cost") is None
             assert state.attributes.get("maximum_cost") is None
@@ -529,6 +546,34 @@ async def test_restore_potential(hass: HomeAssistant, caplog, restore_day) -> No
             assert state.attributes.get("quality") is None
             assert state.attributes.get("last_updated_energy") == {}
             assert state.attributes.get("price") == {}
+        elif option == "another uom":
+            entity_reg = er.async_get(hass)
+            for entity in ["electricity_price", "energy"]:
+                entity_reg.async_get_or_create(
+                    "sensor", "test", entity, suggested_object_id=entity
+                )
+            hass.states.async_set(
+                "sensor.electricity_price",
+                1.22,
+                attributes={"unit_of_measurement": "EUR/kWh"},
+            )
+            hass.states.async_set(
+                "sensor.energy", 2.22, attributes={"unit_of_measurement": "kWh"}
+            )
+            await hass.async_block_till_done()
+
+            # Update cost (and create EUR UoM)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+
+            # Update potential with new cost UoM
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+
+            assert (
+                get_unit_of_measurement(hass, "sensor.my_mock_es_potential_savings")
+                == "EUR"
+            )
 
 
 async def test_declining_energy_energyscore(hass, caplog):
