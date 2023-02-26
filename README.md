@@ -11,9 +11,11 @@ An EnergyScore integration provides three sensors; EnergyScore, Cost and Potenti
 
 EnergyScore is a metric that scores how well you are utilizing changing energy prices throughout the last 24 hours. The EnergyScore will be 0% if you use all of your energy in the most expensive hour, 100% in the cheapest hour, but most likely somewhere in between depending on how well you are able to match your energy use with cheap prices. This integration will not try to optimize your energy use, but is complementary to those like [PowerSaver](https://powersaver.no) or [PriceAnalyzer](https://github.com/erlendsellie/priceanalyzer).
 
-<img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/apex_visual_savings.png" title="EnergyScore Gauge"/>
-
 The cost sensor provides the current day cost while the potential savings sensor compares actual current day cost with what the cost would be if all energy was consumed in the cheapes hour of the day. This is thus the potential savings that can be achieved if energy usage is optimised.
+
+<img src="https://raw.githubusercontent.com/knudsvik/EnergyScore/master/resources/apex_visual_savings.png" width="300" />
+
+Visualisation alternatives available in the [visualisation.md](visualisation.md) file.
 
 You can set up several EnergyScore integrations,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler or dishwasher. EnergyScore and Potential Savings sensors both have a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of the last 24, the quality will be 0.75. The higher the quality is, the more you can trust the sensors.
 
