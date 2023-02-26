@@ -8,9 +8,9 @@ The EnergyScore can be visualised directly using standard lovelace visuals, like
 
 # ApexChart
 
-More advanced visualisations can also be created, e.g. with the [ApexCharts-card](https://github.com/RomRider/apexcharts-card) custom lovelace card. The following example uses the RadialBar option.
+More advanced visualisations can also be created, e.g. with the [ApexCharts-card](https://github.com/RomRider/apexcharts-card) custom lovelace card. The following example uses the RadialBar option and a template sensor to create the percentage of potential savings vs cost.
 
-<img src="resources/apex_visual.png" title="ApexChart RadialBar"/>
+<img src="resources/apex_visual_savings.png" title="ApexChart RadialBar"/>
 
 To set up this, use this configuration for the apexchart-card:
 
@@ -31,7 +31,20 @@ header:
   colorize_states: true
 chart_type: radialBar
 series:
-  - entity: sensor.washer_energy_score
+  - entity: sensor.washer_potential_percentage
+    name: Potential savings
+    show:
+      in_chart: true
+      in_header: false
+    color_threshold:
+      - value: 0
+        color: skyblue
+  - entity: sensor.washer_potential_savings
+    name: Potential savings
+    show:
+      in_chart: false
+      in_header: true
+  - entity: sensor.washer_score
     name: EnergyScore
     show:
       in_chart: true
@@ -43,7 +56,7 @@ series:
         color: orange
       - value: 60
         color: green
-  - entity: sensor.washer_energy_score
+  - entity: sensor.washer_score
     attribute: quality
     transform: return x * 100;
     name: Quality
@@ -59,6 +72,8 @@ series:
       - value: 70
         color: orange
       - value: 90
+        color: green
+
         color: green
 
 ```
