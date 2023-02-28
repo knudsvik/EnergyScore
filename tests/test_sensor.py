@@ -278,6 +278,43 @@ async def test_update_savings_sensor(hass: HomeAssistant) -> None:
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
 
+async def test_update_savings_sensor_cost_midnight(hass: HomeAssistant, caplog) -> None:
+    """Test the update of potential savings where cost is not updated first"""
+
+    initial_datetime = dt.parse_datetime("2022-09-18 23:18:44-07:00")
+
+    # The savings should reset after midnight
+    RESULT = [
+        "unknown",  # 23:18 - No energy usage
+        "unknown",  # 23:28 - First cost calc, but not picked up by potential yet
+        "unknown",  # 23:38 - Cost picked up first time for potential - but no energy calc yet
+        0.72,  # 23:48 - First time the potential can be calculated
+        0.62,  # 23:58
+        0,  # 00:08 - Cost from previous day is used in potential - Should be emitted
+    ]
+
+    with freeze_time(initial_datetime) as frozen_datetime:
+        assert await async_setup_component(hass, "sensor", VALID_CONFIG)
+        await hass.async_block_till_done()
+
+        for update in range(0, 6):
+            print(f"- - - - - UPDATE: {update}")
+            print(f"- - - - - DATETIME: {dt.now()}")
+            hass.states.async_set("sensor.energy", TEST_PARAMS[update]["energy"])
+            if update < 4:
+                price = TEST_PARAMS[0]["price"]
+            else:
+                price = TEST_PARAMS[1]["price"]
+            hass.states.async_set("sensor.electricity_price", price)
+            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+            await hass.async_block_till_done()
+
+            state = hass.states.get("sensor.my_mock_es_potential_savings")
+            assert state.state == str(RESULT[update])
+            frozen_datetime.tick(delta=datetime.timedelta(minutes=10))
+        assert "My Mock ES Potential Savings - Updated cost to 0" in caplog.text
+
+
 async def test_unavailable_sources(hass: HomeAssistant, caplog) -> None:
     """Testing unavailable or unknown price or energy sensors"""
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)

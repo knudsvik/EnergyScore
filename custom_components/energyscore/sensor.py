@@ -508,6 +508,7 @@ class Cost(SensorEntity, RestoreEntity):
             self._state = round(cost, 2)
         else:
             self._state = round(self._state + cost, 2)
+        _LOGGER.debug("%s - Cost: %s", self._name, self._state)
 
         # Clean old data
         self.attr[LAST_ENERGY] = {
@@ -659,10 +660,8 @@ class PotentialSavings(SensorEntity, RestoreEntity):
     def process_new_data(self):
         """Processes the update data"""
         # Fist part similar to cost sensor. Simplify?
-
         now = dt.now()
 
-        # TODO? This next part failed in prod, runs now in test after converting datetimes to strings in the end
         # Parse datetimes from strings
         for i in [LAST_ENERGY, PRICES]:
             if self.attr[i] is not None:
@@ -671,6 +670,12 @@ class PotentialSavings(SensorEntity, RestoreEntity):
                     for key, value in self.attr[i].items()
                     if isinstance(key, str)
                 }
+
+        # Reset cost if last update was another day
+        last_cost = self.cost.attributes.get("last_updated")
+        if last_cost is not None and last_cost.date() != now.date():
+            self.cost.state = 0
+            _LOGGER.debug("%s - Updated cost to 0", self._name)
 
         # Find current day prices
         self.attr[PRICES][
@@ -685,6 +690,7 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         # Calculate energy usage
         self.attr[LAST_ENERGY][now] = self.energy.state
         energy_usage = calculate_energy_usage(self.attr[LAST_ENERGY])
+        _LOGGER.debug("%s - Energy usage: %s", self._name, energy_usage)
         if energy_usage is None or len(self.attr[PRICES]) == 0:
             return
         if (
@@ -708,6 +714,13 @@ class PotentialSavings(SensorEntity, RestoreEntity):
         self.attr[COST_MAX] = round(
             max(self.attr[PRICES].values()) * self.attr[ENERGY_TODAY], 2
         )
+        _LOGGER.debug(
+            "%s - Calculated costs - Avg: %s, Max: %s, Min: %s",
+            self._name,
+            self.attr[COST_AVG],
+            self.attr[COST_MAX],
+            self.attr[COST_MIN],
+        )
 
         # Compare min and actual cost to get potential
         self._state = (
@@ -715,6 +728,7 @@ class PotentialSavings(SensorEntity, RestoreEntity):
             if not self.cost.state - self.attr[COST_MIN] < 0
             else 0
         )
+        _LOGGER.debug("%s - Potential Savings: %s", self._name, self._state)
 
         # Calculate quality
         self.attr[QUALITY] = round(len(self.attr[PRICES]) / (now.hour + 1), 2)
@@ -755,6 +769,13 @@ class PotentialSavings(SensorEntity, RestoreEntity):
                     )
                     return
                 sensor.state = float(sensor.state)
+
+            _LOGGER.debug(
+                "The cost used in savings for %s is: %s, and is last updated: %s",
+                self._name,
+                self.cost.state,
+                self.cost.attributes.get("last_updated"),
+            )
 
         except ValueError:
             _LOGGER.exception("%s - Possibly non-numeric source state", self._name)
