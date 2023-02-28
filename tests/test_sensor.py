@@ -440,12 +440,12 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("icon") == "mdi:speedometer"
 
 
-@pytest.mark.parametrize("option", ["same day", "another day", "another uom"])
-async def test_restore_cost(hass: HomeAssistant, caplog, option) -> None:
+@pytest.mark.parametrize("case", ["same day", "another day", "another uom"])
+async def test_restore_cost(hass: HomeAssistant, caplog, case) -> None:
     """Testing restoring cost sensor state and attributes"""
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
-    if option == "another day":
+    if case == "another day":
         initial_datetime = dt.parse_datetime("2022-09-23 04:23:24+01:00")
 
     stored_state = StoredState(
@@ -482,16 +482,16 @@ async def test_restore_cost(hass: HomeAssistant, caplog, option) -> None:
 
         assert get_unit_of_measurement(hass, "sensor.my_mock_es_cost") == "NOK"
 
-        if option == "same day":
+        if case == "same day":
             assert "Restored My Mock ES Cost" in caplog.text
             assert state.state == "2.33"
             assert state.attributes.get("last_updated_energy") == {
                 "2022-09-18 11:10:44-07:00": 4.2
             }
-        elif option == "another day":
+        elif case == "another day":
             assert "Restored My Mock ES Cost" not in caplog.text
             assert state.state == "0"
-        elif option == "another uom":  # UoM is updated even when restoring another UoM
+        elif case == "another uom":  # UoM is updated even when restoring another UoM
             entity_reg = er.async_get(hass)
             for entity in ["electricity_price", "energy"]:
                 entity_reg.async_get_or_create(
@@ -511,12 +511,12 @@ async def test_restore_cost(hass: HomeAssistant, caplog, option) -> None:
             assert get_unit_of_measurement(hass, "sensor.my_mock_es_cost") == "EUR"
 
 
-@pytest.mark.parametrize("option", ["same day", "another day", "another uom"])
-async def test_restore_potential(hass: HomeAssistant, caplog, option) -> None:
+@pytest.mark.parametrize("case", ["same day", "another day", "another uom"])
+async def test_restore_potential(hass: HomeAssistant, caplog, case) -> None:
     """Testing restoring potential sensor state and attributes"""
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
-    if option == "another day":
+    if case == "another day":
         initial_datetime = dt.parse_datetime("2022-09-23 04:23:24+01:00")
 
     # now = dt.now()
@@ -562,7 +562,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, option) -> None:
             get_unit_of_measurement(hass, "sensor.my_mock_es_potential_savings")
             == "NOK"
         )
-        if option == "same day":
+        if case == "same day":
             assert state.state == "3.33"
             assert state.attributes.get("average_cost") == 1.13
             assert state.attributes.get("maximum_cost") == 5.34
@@ -574,7 +574,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, option) -> None:
                 "2022-09-18T11:10:44-07:00": 4.2
             }
             assert state.attributes.get("price") == {"2022-09-18T13:00:00-0700": 0.99}
-        elif option == "another day":
+        elif case == "another day":
             assert state.state == "0"
             assert state.attributes.get("average_cost") is None
             assert state.attributes.get("maximum_cost") is None
@@ -583,7 +583,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, option) -> None:
             assert state.attributes.get("quality") is None
             assert state.attributes.get("last_updated_energy") == {}
             assert state.attributes.get("price") == {}
-        elif option == "another uom":
+        elif case == "another uom":
             entity_reg = er.async_get(hass)
             for entity in ["electricity_price", "energy"]:
                 entity_reg.async_get_or_create(
@@ -835,55 +835,50 @@ async def test_rolling_hours(hass: HomeAssistant, rolling_hours, hours, score) -
         assert state.state == str(score)
 
 
-async def test_rolling_hours_default(hass: HomeAssistant) -> None:
+@pytest.mark.parametrize("case", ["default", "low", "high"])
+async def test_rolling_hours_default(hass: HomeAssistant, caplog, case) -> None:
     """Test that the default rolling hours is 24"""
 
     CONFIG = copy.deepcopy(VALID_CONFIG)
+    if case == "low":
+        CONFIG["sensor"]["rolling_hours"] = 1
+    elif case == "high":
+        CONFIG["sensor"]["rolling_hours"] = 170
 
     initial_datetime = dt.parse_datetime("2022-09-18 21:08:44+01:00")
     with freeze_time(initial_datetime) as frozen_datetime:
         assert await async_setup_component(hass, "sensor", CONFIG)
         await hass.async_block_till_done()
 
-        for hour in range(0, 36):
-            hass.states.async_set(
-                "sensor.energy",
-                TEST_PARAMS[hour]["energy"],
-                attributes={"state_class": sensor.SensorStateClass.TOTAL_INCREASING},
+        if case == "low":
+            assert (
+                "value must be at least 2 for dictionary value @ data['rolling_hours']. Got 1"
+                in caplog.text
             )
-            hass.states.async_set(
-                "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+        elif case == "high":
+            assert (
+                "value must be at most 168 for dictionary value @ data['rolling_hours']. Got 170"
+                in caplog.text
             )
-            async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
-            await hass.async_block_till_done()
-            frozen_datetime.tick(delta=datetime.timedelta(hours=1))
+        elif case == "default":
+            # Testing that default rolling hours is 24
+            for hour in range(0, 36):
+                hass.states.async_set(
+                    "sensor.energy",
+                    TEST_PARAMS[hour]["energy"],
+                    attributes={
+                        "state_class": sensor.SensorStateClass.TOTAL_INCREASING
+                    },
+                )
+                hass.states.async_set(
+                    "sensor.electricity_price", TEST_PARAMS[hour]["price"]
+                )
+                async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
+                await hass.async_block_till_done()
+                frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
-        state = hass.states.get("sensor.my_mock_es_energyscore")
-        assert len(state.attributes[PRICES]) == 24
-
-
-async def test_rolling_hours_range_low(hass: HomeAssistant, caplog) -> None:
-    """Test rolling hours outside range"""
-
-    CONFIG = copy.deepcopy(VALID_CONFIG)
-    CONFIG["sensor"]["rolling_hours"] = 1
-    assert await async_setup_component(hass, "sensor", CONFIG)
-    assert (
-        "value must be at least 2 for dictionary value @ data['rolling_hours']. Got 1"
-        in caplog.text
-    )
-
-
-async def test_rolling_hours_range_high(hass: HomeAssistant, caplog) -> None:
-    """Test rolling hours outside range"""
-
-    CONFIG = copy.deepcopy(VALID_CONFIG)
-    CONFIG["sensor"]["rolling_hours"] = 170
-    assert await async_setup_component(hass, "sensor", CONFIG)
-    assert (
-        "value must be at most 168 for dictionary value @ data['rolling_hours']. Got 170"
-        in caplog.text
-    )
+            state = hass.states.get("sensor.my_mock_es_energyscore")
+            assert len(state.attributes[PRICES]) == 24
 
 
 async def test_negative_potential(hass: HomeAssistant) -> None:
