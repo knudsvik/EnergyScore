@@ -22,12 +22,10 @@ from homeassistant.setup import async_setup_component
 from homeassistant.util import dt
 from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
-    MockEntity,
-    MockEntityPlatform,
 )
 
 from custom_components.energyscore import config_flow
-from custom_components.energyscore.const import DOMAIN, ENERGY, PRICES, QUALITY
+from custom_components.energyscore.const import ENERGY, PRICES, QUALITY
 from custom_components.energyscore.sensor import (
     SCAN_INTERVAL,
     normalise_energy,
@@ -40,7 +38,6 @@ from .const import (
     PRICE_DICT,
     SAME_PRICE_DICT,
     VALID_CONFIG,
-    VALID_UI_CONFIG,
     TEST_PARAMS,
 )
 
