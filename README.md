@@ -19,6 +19,8 @@ Visualisation alternatives available in the [visualisation.md](visualisation.md)
 
 You can set up several EnergyScore integrations,e.g. one on your total energy usage, another for EV charging or maybe one for your boiler or dishwasher. EnergyScore and Potential Savings sensors both have a quality attribute with a score from 0 to 1 depending on the available data. If a sensor has price and energy data for 18 hours of the last 24, the quality will be 0.75. The higher the quality is, the more you can trust the sensors.
 
+Smart Home Junkie has made a nice [YouTube video](https://www.youtube.com/watch?v=w_nALrSVOuk) on his channel about this integration. For questions and discussion, please see [this thread](https://community.home-assistant.io/t/energyscore/506241) on the Home Assistant Community Forum.
+
 # Get started
 
 ## Installation
