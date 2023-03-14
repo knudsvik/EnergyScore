@@ -60,6 +60,7 @@ sensor:
     name: Heater
     energy_entity: sensor.heater_energy
     price_entity: sensor.nordpool_electricity_price
+    unique_id: 23115006-9C33-4DBD-BF01-498058F61BEC
 ```
 
 ### Configuration variables
@@ -69,7 +70,7 @@ Attribute | Data type | Type | Description
 name | string | Required | Name of the integration instance. This will provide name for the sensors to use in the frontend, but can be changed later if a unique_id is provided. "Boiler" will give sensors: sensor.boiler_energyscore, sensor.boiler_cost and sensor.boiler_potential_savings.
 energy_entity | string | Required | A total (cumulative) energy entity, e.g. from Tibber or PowerCalc integrations or a state from a device. It can be both an entity that resets at given intervals or one that keeps increasing indefinetely. If several is available, it is recommended to choose one with high update frequency.
 price_entity | string | Required | TA price entity which provides the current hourly energy price as the state, e.g. from Nordpool or Tibber integrations.
-unique_id | string | Optional | Unique id to be able to configure the entity in the UI.
+unique_id | string | Required | Unique id to be able to configure the entity in the UI.
 energy_treshold | float | Optional | Energy less than the treshold (during one hour) will not contribute to the EnergyScore (default = 0).
 rolling_hours | int | Optional | The number of hours the EnergyScore should be calculated from (default=24, min=2, max=168).
 

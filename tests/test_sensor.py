@@ -38,6 +38,7 @@ from .const import (
     PRICE_DICT,
     SAME_PRICE_DICT,
     VALID_CONFIG,
+    VALID_CONFIG_2,
     TEST_PARAMS,
 )
 
@@ -46,6 +47,8 @@ async def test_new_config(hass: HomeAssistant, caplog) -> None:
     """Testing a default setup of an energyscore sensor"""
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
+
+    entity_reg = er.async_get(hass)
 
     # EnergyScore
     state = hass.states.get("sensor.my_mock_es_energyscore")
@@ -62,6 +65,9 @@ async def test_new_config(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("last_updated") is None
     assert state.attributes.get("icon") == "mdi:speedometer"
     assert state.attributes.get("friendly_name") == "My Mock ES EnergyScore"
+    assert (
+        entity_reg.async_get("sensor.my_mock_es_energyscore").unique_id == "Testing123"
+    )
 
     # Cost sensor
     state = hass.states.get("sensor.my_mock_es_cost")
@@ -80,6 +86,7 @@ async def test_new_config(hass: HomeAssistant, caplog) -> None:
         "Cannot provide unit of measurement for My Mock ES Cost since the source sensors are not available"
         in caplog.text
     )
+    assert entity_reg.async_get("sensor.my_mock_es_cost").unique_id == "Testing123_cost"
 
     # Potential sensor
     state = hass.states.get("sensor.my_mock_es_potential_savings")
@@ -98,26 +105,37 @@ async def test_new_config(hass: HomeAssistant, caplog) -> None:
     assert state.attributes.get("price") == {}
     assert state.attributes.get("quality") is None
     assert state.attributes.get("friendly_name") == "My Mock ES Potential Savings"
-
-
-async def test_unique_id(hass: HomeAssistant) -> None:
-    """Testing a default setup with unique_id"""
-
-    CONFIG = copy.deepcopy(VALID_CONFIG)
-    CONFIG["sensor"]["unique_id"] = "Testing123"
-
-    assert await async_setup_component(hass, "sensor", CONFIG)
-    await hass.async_block_till_done()
-
-    entity_reg = er.async_get(hass)
-    assert (
-        entity_reg.async_get("sensor.my_mock_es_energyscore").unique_id == "Testing123"
-    )
-    assert entity_reg.async_get("sensor.my_mock_es_cost").unique_id == "Testing123_cost"
     assert (
         entity_reg.async_get("sensor.my_mock_es_potential_savings").unique_id
         == "Testing123_potential_savings"
     )
+
+
+async def test_multiple_config(hass: HomeAssistant) -> None:
+    """Tests that multiple yaml configs can be setup"""
+
+    assert await async_setup_component(hass, "sensor", VALID_CONFIG_2)
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.my_alternative_es_energyscore")
+    assert hass.states.get("sensor.my_alternative_es_cost")
+    assert hass.states.get("sensor.my_alternative_es_potential_savings")
+
+    assert hass.states.get("sensor.my_mock_es_energyscore")
+    assert hass.states.get("sensor.my_mock_es_cost")
+    assert hass.states.get("sensor.my_mock_es_potential_savings")
+
+
+async def test_unique_id(hass: HomeAssistant, caplog) -> None:
+    """Testing a default setup without unique_id"""
+
+    CONFIG = copy.deepcopy(VALID_CONFIG)
+    CONFIG["sensor"].pop("unique_id")
+
+    assert await async_setup_component(hass, "sensor", CONFIG)
+    await hass.async_block_till_done()
+
+    assert "required key not provided @ data['unique_id']" in caplog.text
 
 
 def test_normalisation() -> None:
