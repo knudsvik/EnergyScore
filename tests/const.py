@@ -19,7 +19,28 @@ VALID_CONFIG = {
         "name": "My Mock ES",
         "energy_entity": "sensor.energy",
         "price_entity": "sensor.electricity_price",
+        "unique_id": "Testing123",
     }
+}
+
+
+VALID_CONFIG_2 = {
+    "sensor": [
+        {
+            "platform": "energyscore",
+            "name": "My Mock ES",
+            "energy_entity": "sensor.energy",
+            "price_entity": "sensor.electricity_price",
+            "unique_id": "Testing123",
+        },
+        {
+            "platform": "energyscore",
+            "name": "My Alternative ES",
+            "energy_entity": "sensor.alternative_energy",
+            "price_entity": "sensor.electricity_price",
+            "unique_id": "Testing456",
+        },
+    ],
 }
 
 VALID_UI_CONFIG = {

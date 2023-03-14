@@ -55,7 +55,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ENERGY_ENTITY): cv.entity_id,
         vol.Required(CONF_PRICE_ENTITY): cv.entity_id,
-        vol.Optional(CONF_UNIQUE_ID): cv.string,
+        vol.Required(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_TRESHOLD, default=0): vol.Coerce(float),
         vol.Optional(CONF_ROLLING_HOURS, default=24): vol.All(
             int, vol.Range(min=2, max=168)
