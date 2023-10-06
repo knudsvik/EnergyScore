@@ -1,0 +1,34 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "price_entity": "Cena entity",
+                    "energy_entity": "Energetická entita",
+                    "name": "Názov snímača EnergyScore"
+                },
+                "description": "EnergyScore je vytvorené z energetického a cenového senzora. Vyberte príslušné senzory:",
+                "title": "Vyberte zdrojové entity"
+            }
+        },
+        "abort": {
+            "already_configured": "Kombinácia entít je už nakonfigurovaná"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Spravovať možnosti",
+                "description": "Pozrite si dokumentáciu, ako tieto možnosti ovplyvňujú EnergyScore",
+                "data": {
+                    "energy_treshold": "Energetický prah",
+                    "rolling_hours": "Rolovacie hodiny"
+                },
+                "data_description": {
+                    "energy_treshold": "Energia nižšia ako prahová hodnota (počas jednej hodiny) nebude prispievať k energetickému jadru. Predvolená hodnota = 0",
+                    "rolling_hours": "Časové obdobie, za ktoré by sa malo skóre EnergyScore skórovať. Predvolená hodnota = 24 hodín"
+                }
+            }
+        }
+    }
+}
