@@ -8,6 +8,7 @@ from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.input_number import DOMAIN as INPUT_NUMBER_DOMAIN
 from homeassistant.const import CONF_NAME, CONF_UNIQUE_ID
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
@@ -35,7 +36,7 @@ CONFIG_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_PRICE_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(
-                domain=[SENSOR_DOMAIN],
+                domain=[SENSOR_DOMAIN, INPUT_NUMBER_DOMAIN],
             ),
         ),
     }
