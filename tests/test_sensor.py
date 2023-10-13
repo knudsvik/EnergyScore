@@ -14,7 +14,9 @@ from homeassistant.core import HomeAssistant, State
 import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.entity import get_unit_of_measurement
 from homeassistant.helpers.restore_state import (
-    DATA_RESTORE_STATE_TASK,
+    async_get,
+    async_load,
+    DATA_RESTORE_STATE,
     RestoreStateData,
     StoredState,
 )
@@ -429,12 +431,14 @@ async def test_restore_energyscore(hass: HomeAssistant, caplog) -> None:
         dt.now(),
     )
 
-    data = await RestoreStateData.async_get_instance(hass)
+    data = async_get(hass)
     await hass.async_block_till_done()
     await data.store.async_save([stored_state.as_dict()])
 
     # Emulate a fresh load
-    hass.data.pop(DATA_RESTORE_STATE_TASK)
+    hass.data.pop(DATA_RESTORE_STATE)
+    await async_load(hass)
+    data = async_get(hass)
 
     assert await async_setup_component(hass, "sensor", VALID_CONFIG)
     await hass.async_block_till_done()
@@ -483,7 +487,7 @@ async def test_restore_cost(hass: HomeAssistant, caplog, case) -> None:
         await data.store.async_save([stored_state.as_dict()])
 
         # Emulate a fresh load
-        hass.data.pop(DATA_RESTORE_STATE_TASK)
+        hass.data.pop(DATA_RESTORE_STATE)
 
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
@@ -562,7 +566,7 @@ async def test_restore_potential(hass: HomeAssistant, caplog, case) -> None:
         await data.store.async_save([stored_state.as_dict()])
 
         # Emulate a fresh load
-        hass.data.pop(DATA_RESTORE_STATE_TASK)
+        hass.data.pop(DATA_RESTORE_STATE)
 
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
