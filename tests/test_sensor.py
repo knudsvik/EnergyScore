@@ -482,12 +482,14 @@ async def test_restore_cost(hass: HomeAssistant, caplog, case) -> None:
     )
 
     with freeze_time(initial_datetime) as frozen_datetime:
-        data = await RestoreStateData.async_get_instance(hass)
+        data = async_get(hass)
         await hass.async_block_till_done()
         await data.store.async_save([stored_state.as_dict()])
 
         # Emulate a fresh load
         hass.data.pop(DATA_RESTORE_STATE)
+        await async_load(hass)
+        data = async_get(hass)
 
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
@@ -561,12 +563,14 @@ async def test_restore_potential(hass: HomeAssistant, caplog, case) -> None:
     )
 
     with freeze_time(initial_datetime) as frozen_datetime:
-        data = await RestoreStateData.async_get_instance(hass)
+        data = async_get(hass)
         await hass.async_block_till_done()
         await data.store.async_save([stored_state.as_dict()])
 
         # Emulate a fresh load
         hass.data.pop(DATA_RESTORE_STATE)
+        await async_load(hass)
+        data = async_get(hass)
 
         assert await async_setup_component(hass, "sensor", VALID_CONFIG)
         await hass.async_block_till_done()
