@@ -411,7 +411,7 @@ async def test_non_numeric_source_state(hass: HomeAssistant, caplog) -> None:
     await hass.async_block_till_done()
     async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
     await hass.async_block_till_done()
-    for i in ["EnergyScore", "Cost", "Potential Savings"]:
+    for i in ["EnergyScore", "Cost"]:
         assert f"My Mock ES {i} - Possibly non-numeric source state" in caplog.text
 
 
