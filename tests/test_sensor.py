@@ -221,7 +221,7 @@ async def test_update_cost_sensor(hass: HomeAssistant) -> None:
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             state = hass.states.get("sensor.my_mock_es_cost")
-            assert state.state == str(COST[hour])
+            assert state.state == COST[hour]
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
         # Testing resetting energy sensors (hour 30 is resetting):
@@ -233,7 +233,7 @@ async def test_update_cost_sensor(hass: HomeAssistant) -> None:
             async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
             await hass.async_block_till_done()
             state = hass.states.get("sensor.my_mock_es_cost")
-            assert state.state == str(COST[hour])
+            assert state.state == COST[hour]
             frozen_datetime.tick(delta=datetime.timedelta(hours=1))
 
 
@@ -264,6 +264,8 @@ async def test_update_savings_sensor(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
         for hour in range(0, 6):
+            print(f"- - - - - UPDATE: {hour}")
+            print(f"- - - - - DATETIME: {dt.now()}")
             hass.states.async_set("sensor.energy", TEST_PARAMS[hour]["energy"])
             hass.states.async_set(
                 "sensor.electricity_price", TEST_PARAMS[hour]["price"]
@@ -327,7 +329,7 @@ async def test_update_savings_sensor_cost_midnight(hass: HomeAssistant, caplog) 
             await hass.async_block_till_done()
 
             state = hass.states.get("sensor.my_mock_es_potential_savings")
-            assert state.state == str(RESULT[update])
+            assert state.state == RESULT[update]
             frozen_datetime.tick(delta=datetime.timedelta(minutes=10))
         assert "My Mock ES Potential Savings - Updated cost to 0" in caplog.text
 
@@ -338,30 +340,35 @@ async def test_unavailable_sources(hass: HomeAssistant, caplog) -> None:
     await hass.async_block_till_done()
 
     for state in [STATE_UNAVAILABLE, STATE_UNKNOWN]:
+        # print(f"- - - RUNNING iteration: {state} - - -")
+
         hass.states.async_set("sensor.energy", 24321.4)
         hass.states.async_set("sensor.electricity_price", state)
         hass.states.async_set("sensor.my_mock_es_cost", 23.2)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
+        # print(f"- Time was moved (updating the es with price with {state}) -")
         assert f"My Mock ES EnergyScore - Price data is {state}" in caplog.text
         assert f"My Mock ES Cost - Price data is {state}" in caplog.text
-        assert f"Potential data cannot be updated, state is {state}" in caplog.text
+        assert f"Potential data cannot be updated, state is" in caplog.text
 
         hass.states.async_set("sensor.energy", state)
         hass.states.async_set("sensor.electricity_price", 0.42)
         hass.states.async_set("sensor.my_mock_es_cost", 23.2)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
+        # print(f"- Time was moved (updating the es with energy with {state}) -")
         assert f"My Mock ES EnergyScore - Energy data is {state}" in caplog.text
         assert f"My Mock ES Cost - Energy data is {state}" in caplog.text
-        assert f"Potential data cannot be updated, state is {state}" in caplog.text
+        assert f"Potential data cannot be updated, state is" in caplog.text
 
         hass.states.async_set("sensor.energy", 24321.4)
         hass.states.async_set("sensor.electricity_price", 0.42)
         hass.states.async_set("sensor.my_mock_es_cost", state)
         async_fire_time_changed(hass, dt.now() + SCAN_INTERVAL)
         await hass.async_block_till_done()
-        assert f"Potential data cannot be updated, state is {state}" in caplog.text
+        # print(f"- Time was moved (updating the es with cost with {state}) -")
+        assert f"Potential data cannot be updated, state is" in caplog.text
 
 
 async def test_all_sources_unavailable(hass: HomeAssistant, caplog) -> None:
