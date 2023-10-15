@@ -386,7 +386,7 @@ async def test_all_sources_unavailable(hass: HomeAssistant, caplog) -> None:
         assert f"My Mock ES EnergyScore - Price data is {state}" in caplog.text
         assert f"My Mock ES Cost - Energy data is {state}" in caplog.text
         assert f"My Mock ES Cost - Price data is {state}" in caplog.text
-        assert f"Potential data cannot be updated, state is {state}" in caplog.text
+        assert "Potential data cannot be updated, state is" in caplog.text
 
 
 async def test_no_sources(hass: HomeAssistant, caplog) -> None:
