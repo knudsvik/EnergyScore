@@ -1,10 +1,25 @@
-__pycache__
-pythonenv*
-venv
-.venv
+# Python
+*.pyc
+__pycache__/
 .coverage
-.idea
-.DS_Store
 coverage.xml
-custom_components/hacs
-custom_components/nordpool
+pythonenv*
+venv/
+.venv/
+
+# IDE/editor
+.idea/
+.DS_Store
+
+# Home Assistant runtime
+home-assistant.log*
+home-assistant_v2.db*
+*.db-wal
+*.db-shm
+.storage/
+.env
+secrets.yaml
+
+# Custom components you don't want tracked
+custom_components/hacs/
+custom_components/nordpool/
