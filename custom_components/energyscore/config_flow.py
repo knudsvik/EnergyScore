@@ -88,7 +88,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        # ConfigEntry is provided by the options flow manager; store it explicitly
+        # to avoid assigning to the read-only `config_entry` property on the base
+        # class.
+        self._config_entry = config_entry
         self.current_config: dict = dict(config_entry.data)
         self.current_options = dict(config_entry.options)
 
